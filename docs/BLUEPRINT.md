@@ -33,7 +33,7 @@ pre-change backups → `backups/` in this repo · Convex dashboard →
 |---|---|
 | Product | **Petrable** (renamed from Keithable/Rilable — name matters to the owner; internal targets still `Forge`/`KeithableMac`) |
 | What it is | Prompt → live web app + native iOS app builder (Lovable/Replit-mobile style) |
-| Repo | **Canonical: `github.com/kafworld/petrable`** (KAF World Digital account) — verified full mirror also on `kfleishman-spec`; original open-source base kept as read-only `upstream` (rbrown101010/rilable) |
+| Repo | **Canonical: `github.com/kafworlddigital/petrable`** (KAF World Digital account) — verified full mirror also on `kfleishman-spec`; original open-source base kept as read-only `upstream` (rbrown101010/rilable) |
 | iOS app | SwiftUI, target `Forge`, scheme `Forge`, `.app` = `Forge.app`, display name **Petrable**, bundle `com.kafworlddigital.petrable`, deployment iOS 17+ |
 | macOS app | target `KeithableMac`, product **`Petrable.app`**, bundle `com.keithfleishman.keithable.mac` |
 | Signing | Team **V892V3PC6T** (Keith Fleishman); certs in login keychain; Xcode auto-signing |
