@@ -1,5 +1,7 @@
 # Petrable — agent setup guide
 
+> **Canonical repo: `github.com/kafworld/petrable`** (KAF World Digital). Mirrors: `kfleishman-spec/petrable`; upstream base: `rbrown101010/rilable` (read-only).
+>
 > **Start with [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md)** — the SDLC record, HLD/LLD
 > architecture diagrams, platform inventory and troubleshooting playbook written for AI
 > collaborators. This file is the step-by-step setup runbook that complements it.
