@@ -1,6 +1,6 @@
 import XCTest
 
-/// Tours the Rilable UI: home -> left drawer -> newest project chat ->
+/// Tours the Petrable UI: home -> left drawer -> newest project chat ->
 /// (preview if live) -> home button back. Attaches screenshots throughout.
 final class ForgeTourTest: XCTestCase {
     private func snap(_ app: XCUIApplication, _ name: String) {
@@ -8,6 +8,34 @@ final class ForgeTourTest: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    func testToolConnectionsSheet() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-hasEntered", "YES"]
+        app.launch()
+
+        let connect = app.buttons["connectToolsButton"]
+        XCTAssertTrue(connect.waitForExistence(timeout: 15), "connect tools button should exist")
+        connect.tap()
+
+        XCTAssertTrue(
+            app.staticTexts["Connected through Convex"].waitForExistence(timeout: 8),
+            "tool connections sheet should open"
+        )
+        XCTAssertTrue(app.staticTexts["Free AI"].exists, "Free AI connection row should be visible")
+        XCTAssertTrue(app.staticTexts["Daytona"].exists, "Daytona connection row should be visible")
+        snap(app, "tools-connected")
+
+        let startWeb = app.buttons["toolConnections-web"]
+        XCTAssertTrue(startWeb.waitForExistence(timeout: 5), "web build shortcut should exist")
+        if !startWeb.isHittable {
+            app.swipeUp()
+            sleep(1)
+        }
+        startWeb.tap()
+
+        XCTAssertTrue(app.textFields["promptField"].waitForExistence(timeout: 8), "web shortcut should return to composer")
     }
 
     func testTourLiveProject() throws {
@@ -36,7 +64,11 @@ final class ForgeTourTest: XCTestCase {
 
         let preview = app.buttons["previewButton"].firstMatch
         if preview.waitForExistence(timeout: 8) {
-            preview.tap()
+            if preview.isHittable {
+                preview.tap()
+            } else {
+                app.buttons["playButton"].tap()
+            }
             if app.webViews.firstMatch.waitForExistence(timeout: 25) {
                 sleep(8)
                 snap(app, "4-preview")

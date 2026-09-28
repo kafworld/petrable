@@ -18,5 +18,9 @@ struct ForgeApp: App {
             .animation(.easeInOut(duration: 0.4), value: hasEntered)
             .preferredColorScheme(.dark)
         }
+        #if os(macOS)
+        .defaultSize(width: 1120, height: 760)
+        .windowResizability(.contentMinSize)
+        #endif
     }
 }

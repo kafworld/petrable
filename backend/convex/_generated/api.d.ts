@@ -10,12 +10,15 @@
 
 import type * as builder from "../builder.js";
 import type * as files from "../files.js";
+import type * as freeAi from "../freeAi.js";
 import type * as http from "../http.js";
 import type * as iosTemplate from "../iosTemplate.js";
 import type * as messages from "../messages.js";
 import type * as models from "../models.js";
 import type * as projects from "../projects.js";
+import type * as system from "../system.js";
 import type * as voice from "../voice.js";
+import type * as worker from "../worker.js";
 
 import type {
   ApiFromModules,
@@ -26,12 +29,15 @@ import type {
 declare const fullApi: ApiFromModules<{
   builder: typeof builder;
   files: typeof files;
+  freeAi: typeof freeAi;
   http: typeof http;
   iosTemplate: typeof iosTemplate;
   messages: typeof messages;
   models: typeof models;
   projects: typeof projects;
+  system: typeof system;
   voice: typeof voice;
+  worker: typeof worker;
 }>;
 
 /**

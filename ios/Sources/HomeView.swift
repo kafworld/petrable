@@ -5,14 +5,29 @@ struct HomeView: View {
     @StateObject private var voice = VoiceRecorder()
     @State private var prompt = ""
     @State private var platform = "web"
-    @AppStorage("selectedModel") private var selectedModel = "claude-sonnet-4-6"
+    @AppStorage("selectedModel") private var selectedModel = "free-balanced"
     @State private var creating = false
     @State private var path: [String] = []
     @State private var showDrawer = false
+    @State private var showToolsSheet = false
     @FocusState private var promptFocused: Bool
     @Namespace private var toggleNamespace
 
     private let drawerSpring = Animation.spring(response: 0.38, dampingFraction: 0.86)
+    private var homeContentMaxWidth: CGFloat {
+        #if os(macOS)
+        920
+        #else
+        .infinity
+        #endif
+    }
+    private var drawerWidth: CGFloat {
+        #if os(macOS)
+        340
+        #else
+        304
+        #endif
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -24,6 +39,7 @@ struct HomeView: View {
                     connectPill
                     greeting
                     platformToggle
+                    readinessBanner
                     composerCard
                     Spacer()
                     Spacer()
@@ -31,21 +47,32 @@ struct HomeView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "triangle.fill")
                             .font(.system(size: 9, weight: .bold))
-                        Text("Works with Vercel gateway")
+                        Text("Runs on free AI models")
                             .font(.system(size: 13, weight: .medium))
                     }
                     .foregroundStyle(.white.opacity(0.75))
                     .padding(.bottom, 4)
                 }
+                .frame(maxWidth: homeContentMaxWidth)
+                #if os(macOS)
+                .padding(.horizontal, 34)
+                #endif
 
                 drawerOverlay
             }
-            .toolbar(.hidden, for: .navigationBar)
+            .hiddenNavigationBarWhenAvailable()
             .navigationDestination(for: String.self) { id in
                 ChatView(projectId: id)
             }
         }
         .tint(.white)
+        .sheet(isPresented: $showToolsSheet) {
+            ToolConnectionsSheet(status: vm.systemStatus) { selectedPlatform in
+                platform = selectedPlatform
+                showToolsSheet = false
+                promptFocused = true
+            }
+        }
         .onOpenURL(perform: handleDeepLink)
         .onReceive(DeepLinkRouter.shared.$pendingProjectId) { id in
             guard let id else { return }
@@ -80,7 +107,7 @@ struct HomeView: View {
                         promptFocused = true
                     }
                 )
-                .frame(width: 304)
+                .frame(width: drawerWidth)
                 Spacer(minLength: 0)
             }
             .transition(.move(edge: .leading))
@@ -110,7 +137,7 @@ struct HomeView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 28, height: 28)
-                Text("Rilable")
+                Text("Petrable")
                     .font(.system(size: 27, weight: .bold, design: .serif))
                     .foregroundStyle(.white)
             }
@@ -122,6 +149,7 @@ struct HomeView: View {
     private var connectPill: some View {
         Button {
             Haptics.tap()
+            showToolsSheet = true
         } label: {
             HStack(spacing: 10) {
                 HStack(spacing: -7) {
@@ -142,6 +170,7 @@ struct HomeView: View {
             .overlay(Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
         }
         .buttonStyle(PressableButtonStyle())
+        .accessibilityIdentifier("connectToolsButton")
     }
 
     private func toolBadge(systemName: String, color: Color) -> some View {
@@ -204,7 +233,7 @@ struct HomeView: View {
             TextField(
                 "",
                 text: $prompt,
-                prompt: Text("Ask Rilable to build anything…")
+                prompt: Text("Ask Petrable to build anything…")
                     .foregroundStyle(Theme.textSecondary),
                 axis: .vertical
             )
@@ -216,16 +245,48 @@ struct HomeView: View {
             .accessibilityIdentifier("promptField")
 
             HStack(spacing: 18) {
-                Button { Haptics.tap() } label: {
+                Menu {
+                    Button {
+                        Haptics.tap()
+                        pasteIntoPrompt()
+                    } label: {
+                        Label("Paste", systemImage: "doc.on.clipboard")
+                    }
+                    Button {
+                        Haptics.tap()
+                        platform = "mobile"
+                        prompt = "Make a polished iPhone app for "
+                        promptFocused = true
+                    } label: {
+                        Label("iPhone App", systemImage: "iphone")
+                    }
+                    Button {
+                        Haptics.tap()
+                        platform = "web"
+                        prompt = "Make a polished web app for "
+                        promptFocused = true
+                    } label: {
+                        Label("Web App", systemImage: "globe")
+                    }
+                    Button {
+                        Haptics.tap()
+                        prompt = "Make a simple todo app with projects, due dates, search and a polished native design"
+                        platform = "mobile"
+                        promptFocused = true
+                    } label: {
+                        Label("Todo App Example", systemImage: "checklist")
+                    }
+                } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 21, weight: .medium))
                         .foregroundStyle(.white)
                 }
+                .accessibilityIdentifier("homePlusMenu")
 
                 Spacer()
 
                 Menu {
-                    ForEach(ClaudeModels.options, id: \.key) { option in
+                    ForEach(FreeModels.options, id: \.key) { option in
                         Button {
                             Haptics.tap()
                             selectedModel = option.key
@@ -239,7 +300,7 @@ struct HomeView: View {
                     }
                 } label: {
                     HStack(spacing: 6) {
-                        Text(ClaudeModels.shortName(for: selectedModel))
+                        Text(FreeModels.shortName(for: selectedModel))
                             .font(.system(size: 17, weight: .medium))
                         Image(systemName: "chevron.down")
                             .font(.system(size: 12, weight: .semibold))
@@ -255,7 +316,7 @@ struct HomeView: View {
                 Button(action: submit) {
                     ZStack {
                         Circle()
-                            .fill(canSubmit ? Color.white : Color.white.opacity(0.85))
+                            .fill(canSubmit ? Theme.lime : Theme.lime.opacity(0.85))
                             .frame(width: 44, height: 44)
                         if creating {
                             ProgressView().tint(.black)
@@ -283,13 +344,64 @@ struct HomeView: View {
         .padding(.top, 14)
     }
 
+    private func pasteIntoPrompt() {
+        guard let pasted = Clipboard.pasteText()?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !pasted.isEmpty else {
+            Haptics.error()
+            return
+        }
+        prompt = prompt.isEmpty ? pasted : prompt + " " + pasted
+        promptFocused = true
+    }
+
     private var canSubmit: Bool {
-        !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !creating
+        !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !creating && !selectedPlatformBlocked
+    }
+
+    private var selectedPlatformBlocked: Bool {
+        platform == "mobile" && !vm.systemStatus.mobileBuildsReady
+    }
+
+    @ViewBuilder
+    private var readinessBanner: some View {
+        if selectedPlatformBlocked {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "iphone.slash")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(Theme.amber)
+                    .frame(width: 28, height: 28)
+                    .background(Theme.amber.opacity(0.14), in: Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Mobile builds need your Mac")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white)
+                    Text("Web builds are ready. Start the Mac worker to compile native iPhone apps with Xcode.")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(14)
+            .background(Theme.surface.opacity(0.92), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(Theme.amber.opacity(0.28), lineWidth: 1)
+            )
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .transition(.opacity.combined(with: .move(edge: .top)))
+        }
     }
 
     private func submit() {
         let text = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty, !creating else { return }
+        guard !text.isEmpty, !creating, !selectedPlatformBlocked else {
+            Haptics.error()
+            return
+        }
         creating = true
         Haptics.tap()
         Task {
@@ -322,6 +434,210 @@ struct HomeView: View {
             break
         }
     }
+}
+
+// MARK: - Tool connections
+
+private struct ToolConnectionsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let status: SystemStatus
+    let onStart: (String) -> Void
+
+    private var connections: [ToolConnection] {
+        [
+            ToolConnection(
+                name: "Free AI",
+                detail: "Build reasoning, edits and repair run on free Gemini, Groq and OpenRouter models.",
+                status: status.webBuildsReady ? "Ready" : "Needs key",
+                icon: "sparkles",
+                color: status.webBuildsReady ? Theme.green : Theme.amber
+            ),
+            ToolConnection(
+                name: "Daytona",
+                detail: "Web builds run in hosted sandboxes and return live preview links.",
+                status: status.webBuildsReady ? "Ready" : "Needs key",
+                icon: "globe",
+                color: status.webBuildsReady ? Theme.blue : Theme.amber
+            ),
+            ToolConnection(
+                name: "Mac Worker",
+                detail: "Native iPhone builds compile with Xcode on your Mac and return IPA files.",
+                status: status.mobileBuildsReady ? "Ready" : "Needs setup",
+                icon: "desktopcomputer",
+                color: status.mobileBuildsReady ? Theme.green : Theme.amber
+            ),
+            ToolConnection(
+                name: "Groq Voice",
+                detail: "Voice prompts transcribe free on the server when the Groq key is present.",
+                status: status.voiceReady ? "Ready" : "Optional",
+                icon: "waveform",
+                color: status.voiceReady ? Theme.green : Color(red: 0.80, green: 0.48, blue: 1.00)
+            ),
+            ToolConnection(
+                name: "Free AI Proxy",
+                detail: "Generated apps call the keyless proxy for free AI without exposing any key.",
+                status: status.aiGatewayReady ? "Ready" : "Optional",
+                icon: "triangle.fill",
+                color: status.aiGatewayReady ? Theme.green : Color(red: 0.22, green: 0.62, blue: 1.00)
+            ),
+        ]
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    statusPanel
+
+                    VStack(spacing: 10) {
+                        ForEach(connections) { connection in
+                            connectionRow(connection)
+                        }
+                    }
+
+                    VStack(spacing: 12) {
+                        startButton(title: "Start web build", icon: "globe", platform: "web")
+                        startButton(title: "Start iPhone build", icon: "iphone", platform: "mobile")
+                    }
+                    .padding(.top, 2)
+                }
+                .padding(.horizontal, 18)
+                .padding(.top, 20)
+                .padding(.bottom, 26)
+            }
+            .background(Theme.bg.ignoresSafeArea())
+            .navigationTitle("Tool connections")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                        .foregroundStyle(.white)
+                }
+            }
+        }
+        .darkNavigationChromeWhenAvailable()
+        .desktopSheetFrame(width: 640, height: 720)
+    }
+
+    private var statusPanel: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 13) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 28, weight: .semibold))
+                    .foregroundStyle(Theme.green)
+                    .frame(width: 40, height: 40)
+                    .background(Theme.green.opacity(0.16), in: Circle())
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(status.mobileBuildsReady ? "Connected through Convex" : "Web builds are ready")
+                        .font(.system(size: 22, weight: .bold, design: .serif))
+                        .foregroundStyle(.white)
+                    Text(status.mobileBuildsReady
+                         ? "Petrable uses server-side environment keys, so the phone does not need separate sign-ins for each tool."
+                         : "Mobile builds need the Mac worker. Until then, Petrable will steer you to web builds instead of failing late.")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            HStack(spacing: 8) {
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.textSecondary)
+                Text(AppConfig.convexDeploymentURL.replacingOccurrences(of: "https://", with: ""))
+                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                    .foregroundStyle(.white.opacity(0.84))
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 12)
+            .frame(height: 38)
+            .background(Theme.surfaceLight.opacity(0.62), in: Capsule())
+            .overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1))
+        }
+        .padding(16)
+        .background(Theme.surface.opacity(0.96), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(Theme.stroke, lineWidth: 1)
+        )
+    }
+
+    private func connectionRow(_ connection: ToolConnection) -> some View {
+        HStack(spacing: 13) {
+            Image(systemName: connection.icon)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(connection.color)
+                .frame(width: 38, height: 38)
+                .background(connection.color.opacity(0.15), in: Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(connection.name)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                    Text(connection.status)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(connection.color)
+                        .padding(.horizontal, 7)
+                        .frame(height: 22)
+                        .background(connection.color.opacity(0.13), in: Capsule())
+                }
+                Text(connection.detail)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(Theme.card.opacity(0.95), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(Theme.stroke, lineWidth: 1)
+        )
+    }
+
+    private func startButton(title: String, icon: String, platform: String) -> some View {
+        let blocked = platform == "mobile" && !status.mobileBuildsReady
+        return Button {
+            Haptics.tap()
+            onStart(platform)
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .bold))
+                Text(title)
+                    .font(.system(size: 16, weight: .bold))
+                Spacer(minLength: 0)
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 14, weight: .bold))
+            }
+            .foregroundStyle(blocked ? Theme.textSecondary : .black)
+            .padding(.horizontal, 16)
+            .frame(height: 54)
+            .background(blocked ? Theme.surfaceLight.opacity(0.65) : .white, in: Capsule())
+            .overlay(
+                Capsule()
+                    .strokeBorder(blocked ? Theme.amber.opacity(0.28) : .clear, lineWidth: 1)
+            )
+        }
+        .buttonStyle(PressableButtonStyle())
+        .disabled(blocked)
+        .accessibilityIdentifier("toolConnections-\(platform)")
+    }
+}
+
+private struct ToolConnection: Identifiable {
+    let name: String
+    let detail: String
+    let status: String
+    let icon: String
+    let color: Color
+
+    var id: String { name }
 }
 
 // MARK: - Left drawer

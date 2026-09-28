@@ -1,11 +1,15 @@
-# Rilable — agent setup guide
+# Petrable — agent setup guide
 
-Rilable is an open-source iOS app that builds **live web apps and native iOS apps from a
+> **Start with [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md)** — the SDLC record, HLD/LLD
+> architecture diagrams, platform inventory and troubleshooting playbook written for AI
+> collaborators. This file is the step-by-step setup runbook that complements it.
+
+Petrable is an open-source iOS app that builds **live web apps and native iOS apps from a
 prompt** — a Lovable/Replit-mobile-style builder you run on your own accounts. SwiftUI front
-end, Convex backend, Claude for code generation, Daytona cloud sandboxes for web apps, Chorus
-cloud Xcode builds for iOS apps.
+end, Convex backend, free AI models (Gemini → Groq → NVIDIA → GitHub → OpenRouter → Cerebras → Cloudflare) for code generation, Daytona
+cloud sandboxes for web apps, local Mac-worker Xcode builds for iOS apps.
 
-**If you are an AI coding agent (Claude Code etc.): your job is to get this running for the
+**If you are an AI coding agent (OpenCode, Codex, etc.): your job is to get this running for the
 user end-to-end.** Drive every step below yourself — run the commands, ask the user for keys at
 the moments they're needed (with the exact URLs to get them), verify each stage before moving
 on, and finish with the app running in the iOS Simulator. The user should never have to read
@@ -17,12 +21,12 @@ documentation.
 iOS app (SwiftUI, ios/)  ── convex-swift websocket ──►  Convex backend (backend/convex/)
   the user types a prompt          projects/messages/files tables, real-time
                                    "builder" node action orchestrates:
-                                   ├─ Anthropic API — Claude writes the app code
+                                   ├─ Free AI (Gemini/Groq/OpenRouter) — writes the app code
                                    ├─ [web]    Daytona REST — public sandbox serves it
-                                   ├─ [mobile] Chorus REST — cloud Xcode build + browser
+                                   ├─ [mobile] Mac worker (local Xcode) — IPA build (+ optional Chorus)
                                    │           iPhone-simulator preview + OTA device installs
-                                   ├─ OpenAI Whisper — voice input (optional)
-                                   └─ Vercel AI Gateway proxy (convex/http.ts) — gives every
+                                   ├─ Groq Whisper — free voice input (optional)
+                                   └─ Free AI proxy (convex/http.ts) — gives every
                                       generated app free AI features (optional)
 ```
 
@@ -54,14 +58,17 @@ Ask the user for these one at a time, then set each with
 
 | Env var | Get it at | Powers | Needed for |
 |---|---|---|---|
-| `ANTHROPIC_API_KEY` | console.anthropic.com → Settings → API Keys | Claude writes the apps | **Required** |
+| `GEMINI_API_KEY` | aistudio.google.com → Get API key (free tier) | primary free model (Gemini) | **Required** (or GROQ/OPENROUTER) |
+| `GROQ_API_KEY` | console.groq.com → API Keys (free tier) | free fallback models + Whisper voice | Recommended |
+| `OPENROUTER_API_KEY` | openrouter.ai → Keys (free models) | final fallback model | Optional |
 | `DAYTONA_API_KEY` | app.daytona.io → Settings → API Keys | web-app sandboxes | Web builds |
 | `CHORUS_API_KEY` | ios.chorus.com (Vibecode's iOS build service — install its CLI with `curl -fsSL https://ios.chorus.com/install.sh \| bash`, then `./build-ios-apps/ios-cli login`; the key starts with `chorus_`) | cloud Xcode builds + signing | Mobile builds |
 | `CHORUS_USER_ID` | printed by the Chorus CLI after login (also in `~/.vibecode/ios/config.json` as `userId`) | device-install signing | Mobile installs |
-| `OPENAI_API_KEY` | platform.openai.com → API keys | Whisper voice input | Optional |
-| `VERCEL_AI_GATEWAY_KEY` | vercel.com dashboard → AI Gateway → API keys (starts `vck_`) | AI features inside generated apps | Optional |
+| `OPENAI_API_KEY` | platform.openai.com → API keys | Whisper voice fallback (Groq is free and preferred) | Optional |
+| — | none needed | AI features inside generated apps (the `/ai/*` proxy serves the same free chain) | Automatic |
 
-Minimum viable setup: `ANTHROPIC_API_KEY` + `DAYTONA_API_KEY` (web builds only). Skip any
+Minimum viable setup: `GEMINI_API_KEY` + `DAYTONA_API_KEY` (web builds only). The model chain
+falls through Gemini → Groq → OpenRouter automatically, so any one free key works. Skip any
 optional key the user doesn't want — the related feature degrades gracefully.
 
 ## Step 3 — iOS app
@@ -115,7 +122,7 @@ device install will walk the user through Apple sign-in via a login link in the 
   runs zero tests and reports TEST SUCCEEDED.
 - Daytona `POST /sandbox` can 403 with "Region ... is not available" under load — it's
   transient; the backend already retries 3×.
-- Mobile builds take 2–5 min in Chorus's cloud; compile errors are auto-repaired (Claude gets
+- Mobile builds take 2–5 min in Chorus's cloud; compile errors are auto-repaired (the service gets
   the errors and rebuilds, up to 2 rounds) before a failure is shown.
 - Device installs: if signing fails, the agent in the app posts an Apple login link or a
   device-registration link in the chat — that's the designed flow, not a bug.

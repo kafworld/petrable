@@ -12,6 +12,7 @@ struct Project: Decodable, Identifiable, Equatable {
     let model: String?
     let sandboxId: String?
     let previewUrl: String?
+    let appUrl: String?
     let installUrl: String?
     let version: Double
     let error: String?
@@ -21,12 +22,12 @@ struct Project: Decodable, Identifiable, Equatable {
         case id = "_id"
         case creationTime = "_creationTime"
         case name, emoji, prompt, status, statusDetail, platform, model, sandboxId
-        case previewUrl, installUrl, version, error, updatedAt
+        case previewUrl, appUrl, installUrl, version, error, updatedAt
     }
 
     static let busyStatuses: Set<String> = [
         "queued", "generating", "sandbox", "uploading", "starting", "waking",
-        "updating", "building", "signing",
+        "updating", "building", "signing", "mac_queued", "mac_building",
     ]
 
     var isBusy: Bool { Project.busyStatuses.contains(status) }
@@ -47,6 +48,8 @@ struct Project: Decodable, Identifiable, Equatable {
         case "updating": return "Updating"
         case "building": return "Building"
         case "signing": return "Signing"
+        case "mac_queued": return "Queued for Mac"
+        case "mac_building": return "Building on Mac"
         default: return status.capitalized
         }
     }
@@ -58,7 +61,7 @@ struct Project: Decodable, Identifiable, Equatable {
         case "generating", "updating": return 1
         case "sandbox", "waking": return 2
         case "uploading": return 3
-        case "starting": return 4
+        case "starting", "mac_queued", "mac_building": return 4
         default: return 0
         }
     }
@@ -100,4 +103,18 @@ struct ProjectFile: Decodable, Identifiable, Equatable {
         default: return "Text"
         }
     }
+}
+
+struct SystemStatus: Decodable, Equatable {
+    let webBuildsReady: Bool
+    let mobileBuildsReady: Bool
+    let voiceReady: Bool
+    let aiGatewayReady: Bool
+
+    static let unknown = SystemStatus(
+        webBuildsReady: true,
+        mobileBuildsReady: true,
+        voiceReady: true,
+        aiGatewayReady: true
+    )
 }

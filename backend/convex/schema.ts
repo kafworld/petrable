@@ -7,16 +7,16 @@ export default defineSchema({
     emoji: v.string(),
     prompt: v.string(),
     // web: queued | generating | sandbox | uploading | starting | live | updating | waking | error
-    // mobile adds: building | signing
+    // mobile adds: building | signing | mac_queued | mac_building
     status: v.string(),
     statusDetail: v.optional(v.string()),
     // "web" (Daytona sandbox) or "mobile" (Chorus iOS build); absent = web
     platform: v.optional(v.string()),
-    // Claude model key used for generation (see convex/models.ts)
+    // Free model tier key used for generation (see convex/models.ts)
     model: v.optional(v.string()),
     sandboxId: v.optional(v.string()),
     previewUrl: v.optional(v.string()),
-    // Chorus pipeline state (mobile projects)
+    // Mobile build pipeline state (Chorus or local Mac worker)
     buildJobId: v.optional(v.string()),
     appUrl: v.optional(v.string()),
     simBuildId: v.optional(v.string()),

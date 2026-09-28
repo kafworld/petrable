@@ -1,23 +1,30 @@
 import SwiftUI
 
+// KAF World family palette — mirrors Sermo Voice's native theme
+// (navy panels · blue navigation/links · lime primary actions · blue-grey
+// surfaces). Values traced from SermoBrandMark.swift and the approved Relo
+// reference tokens; contrast ratios follow the Sermo theme acceptance
+// (lime-on-navy ≈16:1, white-on-blue ≈6:1, secondary ≥4.9:1).
 enum Theme {
-    static let bg = Color.black
-    static let surface = Color(red: 0.110, green: 0.110, blue: 0.118)       // #1C1C1E
-    static let surfaceLight = Color(red: 0.173, green: 0.173, blue: 0.180)  // #2C2C2E
-    static let card = Color(red: 0.078, green: 0.078, blue: 0.084)
-    static let composer = Color(red: 0.102, green: 0.102, blue: 0.108)
-    static let stroke = Color.white.opacity(0.09)
-    static let textPrimary = Color.white
-    static let textSecondary = Color(red: 0.580, green: 0.580, blue: 0.600) // #949499
-    static let blue = Color(red: 0.250, green: 0.480, blue: 1.000)
+    static let bg = Color(red: 11 / 255, green: 14 / 255, blue: 24 / 255)         // #0B0E18 KAF site ink (matches kafworlddigital.com)
+    static let surface = Color(red: 16 / 255, green: 26 / 255, blue: 49 / 255)     // #101A31 panel
+    static let surfaceLight = Color(red: 23 / 255, green: 35 / 255, blue: 63 / 255) // #17233F raised
+    static let card = Color(red: 12 / 255, green: 20 / 255, blue: 36 / 255)        // #0C1424 card
+    static let composer = Color(red: 14 / 255, green: 23 / 255, blue: 48 / 255)    // #0E1730 input
+    static let stroke = Color.white.opacity(0.10)
+    static let textPrimary = Color(red: 234 / 255, green: 241 / 255, blue: 255 / 255) // #EAF1FF
+    static let textSecondary = Color(red: 143 / 255, green: 161 / 255, blue: 196 / 255) // #8FA1C4 blue-grey
+    static let blue = Color(red: 75 / 255, green: 87 / 255, blue: 245 / 255)      // #4B57F5 Sermo blue
+    static let lime = Color(red: 200 / 255, green: 255 / 255, blue: 53 / 255)      // #C8FF35 primary actions
     static let green = Color(red: 0.290, green: 0.850, blue: 0.550)
     static let red = Color(red: 0.960, green: 0.380, blue: 0.380)
     static let amber = Color(red: 1.000, green: 0.700, blue: 0.300)
 
-    static let bloomBlue = Color(red: 0.110, green: 0.300, blue: 0.980)
-    static let bloomIndigo = Color(red: 0.300, green: 0.220, blue: 0.950)
-    static let bloomPink = Color(red: 0.940, green: 0.230, blue: 0.560)
-    static let bloomOrange = Color(red: 1.000, green: 0.420, blue: 0.130)
+    // Home bloom re-tuned to the family: indigo → blue → lavender → lime
+    static let bloomBlue = Color(red: 75 / 255, green: 87 / 255, blue: 245 / 255)   // #4B57F5
+    static let bloomIndigo = Color(red: 65 / 255, green: 84 / 255, blue: 239 / 255) // #4154EF
+    static let bloomPink = Color(red: 196 / 255, green: 166 / 255, blue: 255 / 255) // #C4A6FF lavender
+    static let bloomOrange = Color(red: 200 / 255, green: 255 / 255, blue: 53 / 255) // #C8FF35 lime
 
     static let heartGradient = LinearGradient(
         colors: [bloomOrange, bloomPink],
@@ -34,42 +41,44 @@ struct LovableBloom: View {
             let w = geo.size.width
             let h = geo.size.height
             ZStack {
-                Color.black
+                Theme.bg
 
                 Ellipse()
                     .fill(
                         RadialGradient(
-                            colors: [Theme.bloomBlue.opacity(0.80), .clear],
+                            colors: [Theme.bloomBlue.opacity(0.58), .clear],
                             center: .center,
                             startRadius: 8,
                             endRadius: w * 0.85
                         )
                     )
-                    .frame(width: w * 1.8, height: h * 0.62)
-                    .position(x: w / 2, y: h * 0.62)
-                    .blur(radius: 46)
+                    .frame(width: w * 1.8, height: h * 0.56)
+                    .position(x: w / 2, y: h * 0.76)
+                    .blur(radius: 56)
 
                 Ellipse()
-                    .fill(Theme.bloomIndigo.opacity(0.45))
+                    .fill(Theme.bloomIndigo.opacity(0.30))
                     .frame(width: w * 1.3, height: h * 0.36)
-                    .position(x: w * 0.32, y: h * 0.72)
+                    .position(x: w * 0.32, y: h * 0.84)
                     .blur(radius: 70)
 
                 Ellipse()
-                    .fill(Theme.bloomPink.opacity(0.85))
+                    .fill(Theme.bloomPink.opacity(0.55))
                     .frame(width: w * 2.0, height: h * 0.42)
-                    .position(x: w / 2, y: h * 0.92)
+                    .position(x: w / 2, y: h * 0.96)
                     .blur(radius: 60)
 
                 Ellipse()
-                    .fill(Theme.bloomOrange.opacity(0.95))
+                    .fill(Theme.bloomOrange.opacity(0.78))
                     .frame(width: w * 2.2, height: h * 0.34)
-                    .position(x: w / 2, y: h * 1.10)
+                    .position(x: w / 2, y: h * 1.16)
                     .blur(radius: 55)
             }
         }
         .ignoresSafeArea()
+        #if !os(macOS)
         .ignoresSafeArea(.keyboard)
+        #endif
     }
 }
 
@@ -123,13 +132,19 @@ extension View {
 
 enum Haptics {
     static func success() {
+        #if !os(macOS)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
     }
     static func error() {
+        #if !os(macOS)
         UINotificationFeedbackGenerator().notificationOccurred(.error)
+        #endif
     }
     static func tap() {
+        #if !os(macOS)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
     }
 }
 

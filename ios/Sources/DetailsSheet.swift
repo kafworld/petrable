@@ -34,10 +34,9 @@ struct DetailsSheet: View {
                 }
             }
             .navigationTitle(vm.project.map { "\($0.name) · Files" } ?? "Files")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.black, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .darkNavigationChromeWhenAvailable()
         }
+        .desktopSheetFrame()
         .preferredColorScheme(.dark)
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
@@ -85,8 +84,6 @@ struct CodeDetailView: View {
             }
         }
         .navigationTitle(file.path)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color.black, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        .darkNavigationChromeWhenAvailable()
     }
 }

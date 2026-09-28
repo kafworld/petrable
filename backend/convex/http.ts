@@ -1,12 +1,11 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
+import { freeChatCompletion } from "./freeAi";
 
-// AI proxy for generated apps: forwards /ai/* to the Vercel AI Gateway with
-// the key injected server-side, so no generated app ever contains the key.
-// Generated web apps call it from the browser (hence CORS *); generated iOS
-// apps call it via URLSession.
-
-const GATEWAY_BASE = "https://ai-gateway.vercel.sh/v1";
+// AI proxy for generated apps: forwards /ai/* to the free model chain
+// (Gemini → Groq → OpenRouter) with the key injected server-side, so no
+// generated app ever contains a key. Generated web apps call it from the
+// browser (hence CORS *); generated iOS apps call it via URLSession.
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -28,13 +27,6 @@ http.route({
   pathPrefix: "/ai/",
   method: "POST",
   handler: httpAction(async (_ctx, request) => {
-    const key = process.env.VERCEL_AI_GATEWAY_KEY;
-    if (!key) {
-      return new Response(JSON.stringify({ error: "AI gateway key not configured" }), {
-        status: 500,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      });
-    }
     const url = new URL(request.url);
     const suffix = url.pathname.replace(/^\/ai\//, "");
     if (!/^[a-z0-9/_-]+$/i.test(suffix)) {
@@ -50,19 +42,27 @@ http.route({
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
       });
     }
-    const upstream = await fetch(`${GATEWAY_BASE}/${suffix}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body,
-      signal: AbortSignal.timeout(120_000),
-    });
-    const text = await upstream.text();
+    let payload: Record<string, unknown>;
+    try {
+      payload = JSON.parse(body);
+    } catch {
+      return new Response(JSON.stringify({ error: "invalid JSON body" }), {
+        status: 400,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
+    // Only chat completions are served; the model id is rewritten to the
+    // free chain inside freeChatCompletion.
+    if (!suffix.toLowerCase().endsWith("chat/completions")) {
+      return new Response(JSON.stringify({ error: "unsupported endpoint" }), {
+        status: 404,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
+    const { status, body: text } = await freeChatCompletion(payload);
     return new Response(text, {
-      status: upstream.status,
-      headers: {
-        ...CORS_HEADERS,
-        "Content-Type": upstream.headers.get("Content-Type") ?? "application/json",
-      },
+      status,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
   }),
 });

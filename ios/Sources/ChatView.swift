@@ -18,6 +18,13 @@ struct ChatView: View {
         formatter.dateFormat = "MMM d 'at' h:mm a"
         return formatter
     }()
+    private var contentMaxWidth: CGFloat {
+        #if os(macOS)
+        920
+        #else
+        .infinity
+        #endif
+    }
 
     var body: some View {
         ZStack {
@@ -31,7 +38,7 @@ struct ChatView: View {
                 composer
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .hiddenNavigationBarWhenAvailable()
         .task { vm.wake() }
         .onAppear {
             switch DeepLinkRouter.shared.consumeTab() {
@@ -48,7 +55,7 @@ struct ChatView: View {
                 Haptics.error()
             }
         }
-        .fullScreenCover(isPresented: $showPreview) {
+        .previewPresentation(isPresented: $showPreview) {
             PreviewScreen(vm: vm)
         }
         .sheet(isPresented: $showDetails) {
@@ -103,7 +110,7 @@ struct ChatView: View {
                             Label("Open in Safari", systemImage: "safari")
                         }
                         Button {
-                            UIPasteboard.general.string = urlString
+                            Clipboard.copy(urlString)
                             Haptics.tap()
                         } label: {
                             Label("Copy link", systemImage: "link")
@@ -159,8 +166,10 @@ struct ChatView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 14)
+                .frame(maxWidth: contentMaxWidth)
+                .frame(maxWidth: .infinity)
             }
-            .scrollDismissesKeyboard(.interactively)
+            .keyboardDismissModeWhenAvailable()
             .onChange(of: vm.messages.count) { _, _ in
                 withAnimation(.easeOut(duration: 0.25)) { scrollToBottom(proxy) }
             }
@@ -204,7 +213,7 @@ struct ChatView: View {
                             .foregroundStyle(Theme.textSecondary)
                     }
                     Button {
-                        UIPasteboard.general.string = message.content
+                        Clipboard.copy(message.content)
                         Haptics.tap()
                     } label: {
                         Image(systemName: "square.on.square")
@@ -230,6 +239,7 @@ struct ChatView: View {
             VStack(alignment: .leading, spacing: 18) {
                 BuildCard(
                     title: parsed.title,
+                    previewLabel: vm.project?.previewUrl == nil && vm.project?.isMobile == true ? "Status" : "Preview",
                     onDetails: {
                         Haptics.tap()
                         showDetails = true
@@ -245,11 +255,26 @@ struct ChatView: View {
                 actionRow(copyText: parsed.body.isEmpty ? message.content : parsed.body)
             }
         } else if message.content.hasPrefix("❌") {
+            let error = friendlyError(message.content)
             VStack(alignment: .leading, spacing: 14) {
-                Text(message.content.replacingOccurrences(of: "❌ ", with: ""))
-                    .font(.system(size: 16))
-                    .foregroundStyle(Theme.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: error.icon)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(error.tint)
+                        .frame(width: 32, height: 32)
+                        .background(error.tint.opacity(0.14), in: Circle())
+
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(error.title)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                        Text(error.detail)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(Theme.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 Button {
                     Haptics.tap()
                     vm.retry()
@@ -259,9 +284,15 @@ struct ChatView: View {
                         .foregroundStyle(.black)
                         .padding(.horizontal, 22)
                         .padding(.vertical, 11)
-                        .background(.white, in: Capsule())
+                        .background(Theme.lime, in: Capsule())
                 }
             }
+            .padding(16)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .strokeBorder(error.tint.opacity(0.24), lineWidth: 1)
+            )
         } else {
             VStack(alignment: .leading, spacing: 14) {
                 MarkdownText(content: message.content)
@@ -282,6 +313,36 @@ struct ChatView: View {
         return (title, body)
     }
 
+    private func friendlyError(_ content: String) -> (title: String, detail: String, icon: String, tint: Color) {
+        let text = content.replacingOccurrences(of: "❌ ", with: "")
+        if text.contains("CHORUS_API_KEY") || text.contains("CHORUS_USER_ID") {
+            return (
+                "Mobile builds need your Mac",
+                "Web builds are ready. Native iPhone builds now compile through the Mac worker instead of Chorus.",
+                "desktopcomputer",
+                Theme.amber
+            )
+        }
+        if text.contains("free AI key") || text.contains("GEMINI_API_KEY") ||
+            text.contains("free model provider failed") || text.localizedCaseInsensitiveContains("credit balance") {
+            return (
+                "Free AI needs attention",
+                "The build could not reach a free model. Check the Gemini/Groq/OpenRouter keys on the Convex deployment, then try again.",
+                "sparkles",
+                Theme.amber
+            )
+        }
+        if text.contains("DAYTONA_API_KEY") {
+            return (
+                "Web builds need Daytona setup",
+                "Petrable needs the Daytona API key on Convex before it can launch hosted web previews.",
+                "globe",
+                Theme.amber
+            )
+        }
+        return ("Build failed", text, "exclamationmark.triangle.fill", Theme.red)
+    }
+
     private func actionRow(copyText: String) -> some View {
         HStack(spacing: 24) {
             Button { Haptics.tap() } label: {
@@ -294,7 +355,7 @@ struct ChatView: View {
                 Image(systemName: "hand.thumbsdown")
             }
             Button {
-                UIPasteboard.general.string = copyText
+                Clipboard.copy(copyText)
                 Haptics.tap()
             } label: {
                 Image(systemName: "square.on.square")
@@ -334,6 +395,8 @@ struct ChatView: View {
                 }
             }
             .padding(.horizontal, 16)
+            .frame(maxWidth: contentMaxWidth)
+            .frame(maxWidth: .infinity)
         }
         .padding(.bottom, 12)
     }
@@ -345,7 +408,7 @@ struct ChatView: View {
             TextField(
                 "",
                 text: $draft,
-                prompt: Text(busy ? "Queue follow-up…" : "Ask Rilable…")
+                prompt: Text(busy ? "Queue follow-up…" : "Ask Petrable…")
                     .foregroundStyle(Theme.textSecondary),
                 axis: .vertical
             )
@@ -358,7 +421,7 @@ struct ChatView: View {
             .padding(.top, 4)
 
             HStack(spacing: 12) {
-                ComposerCircle(systemName: "plus")
+                chatPlusMenu
                 chatModelMenu
                 Spacer()
                 VoiceButton(voice: voice, styleCircle: true) { text in
@@ -396,18 +459,59 @@ struct ChatView: View {
             RoundedRectangle(cornerRadius: 30, style: .continuous)
                 .strokeBorder(Theme.stroke, lineWidth: 1)
         )
+        .frame(maxWidth: contentMaxWidth)
         .padding(.horizontal, 10)
         .padding(.bottom, 6)
     }
 
+    private var chatPlusMenu: some View {
+        Menu {
+            Button {
+                Haptics.tap()
+                pasteIntoDraft()
+            } label: {
+                Label("Paste", systemImage: "doc.on.clipboard")
+            }
+            Button {
+                Haptics.tap()
+                draft = "Add a useful feature and keep the design polished"
+                focused = true
+            } label: {
+                Label("Add Feature", systemImage: "sparkles")
+            }
+            Button {
+                Haptics.tap()
+                showDetails = true
+            } label: {
+                Label("View Code", systemImage: "curlybraces")
+            }
+            Button {
+                Haptics.tap()
+                showPreview = true
+            } label: {
+                Label("Open Preview", systemImage: "play")
+            }
+            .disabled(vm.project?.previewUrl == nil)
+            Button {
+                Haptics.tap()
+                DeepLinkRouter.shared.goHome()
+            } label: {
+                Label("New Build", systemImage: "plus.app")
+            }
+        } label: {
+            ComposerCircle(systemName: "plus")
+        }
+        .accessibilityIdentifier("chatPlusMenu")
+    }
+
     private var chatModelMenu: some View {
         Menu {
-            ForEach(ClaudeModels.options, id: \.key) { option in
+            ForEach(FreeModels.options, id: \.key) { option in
                 Button {
                     Haptics.tap()
                     vm.setModel(option.key)
                 } label: {
-                    if (vm.project?.model ?? "claude-sonnet-4-6") == option.key {
+                    if (vm.project?.model ?? "free-balanced") == option.key {
                         Label(option.name, systemImage: "checkmark")
                     } else {
                         Text(option.name)
@@ -416,7 +520,7 @@ struct ChatView: View {
             }
         } label: {
             HStack(spacing: 7) {
-                Text(ClaudeModels.shortName(for: vm.project?.model))
+                Text(FreeModels.shortName(for: vm.project?.model))
                     .font(.system(size: 15, weight: .semibold))
                     .lineLimit(1)
                     .fixedSize()
@@ -444,6 +548,16 @@ struct ChatView: View {
             }
             sending = false
         }
+    }
+
+    private func pasteIntoDraft() {
+        guard let pasted = Clipboard.pasteText()?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !pasted.isEmpty else {
+            Haptics.error()
+            return
+        }
+        draft = draft.isEmpty ? pasted : draft + " " + pasted
+        focused = true
     }
 }
 
@@ -485,13 +599,11 @@ struct ComposerCircle: View {
     let systemName: String
 
     var body: some View {
-        Button { Haptics.tap() } label: {
-            Image(systemName: systemName)
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(.white.opacity(0.92))
-                .frame(width: 44, height: 44)
-                .background(Theme.surfaceLight.opacity(0.85), in: Circle())
-        }
+        Image(systemName: systemName)
+            .font(.system(size: 17, weight: .medium))
+            .foregroundStyle(.white.opacity(0.92))
+            .frame(width: 44, height: 44)
+            .background(Theme.surfaceLight.opacity(0.85), in: Circle())
     }
 }
 
@@ -521,6 +633,7 @@ struct WorkingCard: View {
 
 struct BuildCard: View {
     let title: String
+    let previewLabel: String
     let onDetails: () -> Void
     let onPreview: () -> Void
 
@@ -538,7 +651,7 @@ struct BuildCard: View {
             }
             HStack(spacing: 10) {
                 cardButton("Details", identifier: "detailsButton", action: onDetails)
-                cardButton("Preview", identifier: "previewButton", action: onPreview)
+                cardButton(previewLabel, identifier: "previewButton", action: onPreview)
             }
         }
         .padding(16)
@@ -555,11 +668,14 @@ struct BuildCard: View {
             Text(label)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(Theme.surfaceLight.opacity(0.75), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .frame(maxWidth: .infinity, minHeight: 50)
+                .contentShape(Rectangle())
         }
+        .frame(maxWidth: .infinity, minHeight: 50)
+        .background(Theme.surfaceLight.opacity(0.75), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .buttonStyle(PressableButtonStyle())
         .accessibilityIdentifier(identifier)
+        .accessibilityLabel(label)
     }
 }

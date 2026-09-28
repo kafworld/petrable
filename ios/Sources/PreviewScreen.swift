@@ -14,6 +14,10 @@ struct PreviewScreen: View {
                    let urlString = project.previewUrl,
                    let url = URL(string: urlString) {
                     PreviewWebView(url: url, version: Int(project.version), reloadToken: reloadToken)
+                } else if let project = vm.project,
+                          project.isMobile,
+                          project.isLive {
+                    mobileReadyView(project)
                 } else {
                     ZStack {
                         Color.black
@@ -26,11 +30,51 @@ struct PreviewScreen: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipped()
 
             bottomBar
         }
         .background(Color.black.ignoresSafeArea())
+    }
+
+    private func mobileReadyView(_ project: Project) -> some View {
+        ZStack {
+            Color.black
+            VStack(spacing: 18) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 48, weight: .semibold))
+                    .foregroundStyle(Theme.green)
+
+                VStack(spacing: 8) {
+                    Text("\(project.name) is Apple-ready")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                    Text(project.statusDetail ?? "IPA built on your Mac")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(Theme.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                if let appUrl = project.appUrl, !appUrl.isEmpty {
+                    Button {
+                        Clipboard.copy(appUrl)
+                        Haptics.tap()
+                    } label: {
+                        Label("Copy IPA Path", systemImage: "doc.on.doc")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 18)
+                            .frame(height: 48)
+                            .background(Theme.surfaceLight.opacity(0.85), in: Capsule())
+                    }
+                    .accessibilityIdentifier("copyIpaPathButton")
+                }
+            }
+            .padding(.horizontal, 30)
+            .frame(maxWidth: 520)
+        }
     }
 
     private var bottomBar: some View {
@@ -61,11 +105,20 @@ struct PreviewScreen: View {
             }
             if let urlString = vm.project?.previewUrl, let url = URL(string: urlString) {
                 Link(destination: url) {
+                    #if os(macOS)
+                    Label("Open in Browser", systemImage: "safari")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .frame(height: 48)
+                        .background(Theme.surfaceLight.opacity(0.85), in: Capsule())
+                    #else
                     Image(systemName: "safari")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(.white)
                         .frame(width: 48, height: 48)
                         .background(Theme.surfaceLight.opacity(0.85), in: Circle())
+                    #endif
                 }
             }
             if let urlString = vm.project?.previewUrl, let url = URL(string: urlString) {
@@ -95,11 +148,50 @@ struct PreviewScreen: View {
     }
 }
 
-struct PreviewWebView: UIViewRepresentable {
+struct PreviewWebView {
     let url: URL
     let version: Int
     let reloadToken: Int
+}
 
+extension PreviewWebView {
+    private var cacheKey: String {
+        "\(url.absoluteString)|v\(version)|r\(reloadToken)"
+    }
+
+    private func load(_ webView: WKWebView, coordinator: Coordinator) {
+        coordinator.loadedKey = cacheKey
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        webView.load(request)
+    }
+
+    final class Coordinator {
+        var loadedKey: String?
+    }
+}
+
+#if os(macOS)
+extension PreviewWebView: NSViewRepresentable {
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    func makeNSView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.allowsBackForwardNavigationGestures = false
+        load(webView, coordinator: context.coordinator)
+        return webView
+    }
+
+    func updateNSView(_ webView: WKWebView, context: Context) {
+        guard context.coordinator.loadedKey != cacheKey else { return }
+        load(webView, coordinator: context.coordinator)
+    }
+}
+#else
+extension PreviewWebView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator {
         Coordinator()
     }
@@ -120,19 +212,5 @@ struct PreviewWebView: UIViewRepresentable {
         guard context.coordinator.loadedKey != cacheKey else { return }
         load(webView, coordinator: context.coordinator)
     }
-
-    private var cacheKey: String {
-        "\(url.absoluteString)|v\(version)|r\(reloadToken)"
-    }
-
-    private func load(_ webView: WKWebView, coordinator: Coordinator) {
-        coordinator.loadedKey = cacheKey
-        var request = URLRequest(url: url)
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-        webView.load(request)
-    }
-
-    final class Coordinator {
-        var loadedKey: String?
-    }
 }
+#endif

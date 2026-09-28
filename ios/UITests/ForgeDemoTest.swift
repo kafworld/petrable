@@ -31,7 +31,11 @@ final class ForgeDemoTest: XCTestCase {
         let previewButton = app.buttons["previewButton"]
         XCTAssertTrue(previewButton.waitForExistence(timeout: 420), "app should go live")
         sleep(3)
-        previewButton.tap()
+        if previewButton.isHittable {
+            previewButton.tap()
+        } else {
+            app.buttons["playButton"].tap()
+        }
 
         XCTAssertTrue(app.webViews.firstMatch.waitForExistence(timeout: 25), "preview should render")
         sleep(12)

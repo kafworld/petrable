@@ -111,15 +111,17 @@ export const wake = mutation({
   },
 });
 
-// Switch which Claude model the agent uses for this project's future builds.
+// Switch which free model tier the agent uses for this project's future builds.
 export const setModel = mutation({
   args: { id: v.id("projects"), model: v.string() },
   returns: v.null(),
   handler: async (ctx, { id, model }) => {
-    if (!isAllowedModel(model)) throw new Error("Unknown model");
+    // Legacy projects can still carry pre-free-tier keys; coerce those to the
+    // default instead of failing (mirrors the create path).
+    const next = isAllowedModel(model) ? model : DEFAULT_MODEL_KEY;
     const project = await ctx.db.get(id);
     if (!project) return null;
-    await ctx.db.patch(id, { model, updatedAt: Date.now() });
+    await ctx.db.patch(id, { model: next, updatedAt: Date.now() });
     return null;
   },
 });

@@ -14,17 +14,29 @@ final class ConvexService {
 @MainActor
 final class ProjectsViewModel: ObservableObject {
     @Published var projects: [Project] = []
+    @Published var systemStatus = SystemStatus.unknown
     @Published var loaded = false
     private var cancellables = Set<AnyCancellable>()
 
     init() {
-        ConvexService.shared.client
+        let client = ConvexService.shared.client
+
+        client
             .subscribe(to: "projects:list", yielding: [Project].self)
             .replaceError(with: [])
             .receive(on: DispatchQueue.main)
             .sink { [weak self] projects in
                 self?.projects = projects
                 self?.loaded = true
+            }
+            .store(in: &cancellables)
+
+        client
+            .subscribe(to: "system:status", yielding: SystemStatus.self)
+            .replaceError(with: .unknown)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                self?.systemStatus = status
             }
             .store(in: &cancellables)
     }

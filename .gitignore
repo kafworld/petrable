@@ -16,3 +16,9 @@ screenshots/
 
 # OS noise
 .DS_Store
+
+# Derived data / local evidence (regenerated or reproducible)
+ios/build-*/
+backups/
+devicectl-*.json
+ios/Info-macOS.plist

@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="apple-touch-icon" href="favicon-180.png">
+<title>Petrable ● Blueprint — SDLC · Architecture · Troubleshooting</title>
+<style>
+:root{--bg:#0a0d16;--canvas:#e9eef9;--surface:#ffffff;--line:#dce4f2;--ink:#101828;
+--muted:#5b6b85;--cobalt:#4653f4;--cobalt-strong:#293dcc;--selected:#cedafd;
+--accent:#c3fa35;--panel:#0c111b;--ease:cubic-bezier(.22,1,.36,1);
+--font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--canvas);color:var(--ink);font:15.5px/1.62 var(--font);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:0 28px;position:relative}
+a{color:var(--cobalt);text-decoration:none;border-bottom:1.5px solid transparent;transition:border-color .2s var(--ease)}
+a:hover{border-color:var(--cobalt)}
+code{font:13px ui-monospace,SFMono-Regular,Menlo;background:#eef2fb;color:#2f3f7a;padding:1.5px 6px;border-radius:6px}
+pre{background:var(--panel);color:#cfe0f5;padding:16px 18px;border-radius:8px;overflow-x:auto;font:12.8px/1.6 ui-monospace,Menlo}
+pre code{background:none;padding:0;color:inherit}
+
+/* ---- black-first top (mirrors the site opening) ---- */
+nav{position:sticky;top:0;z-index:50;background:var(--bg);color:#e7eef7;border-bottom:1px solid #1d2537}
+nav .wrap{display:flex;align-items:center;gap:18px;height:52px}
+nav .brand{font-weight:750;letter-spacing:.1em;font-size:12.5px;text-transform:uppercase;white-space:nowrap}
+nav .brand i{font-style:normal;color:var(--accent)}
+nav .links{display:flex;gap:13px;overflow-x:auto;scrollbar-width:none}
+nav .links::-webkit-scrollbar{display:none}
+nav a{color:#9fb0cd;font-size:12px;letter-spacing:.07em;text-transform:uppercase;border:0;white-space:nowrap;padding:6px 9px;border-radius:7px}
+nav a:hover{color:var(--bg);background:var(--accent);border-bottom-color:transparent}
+
+header{background:var(--bg);color:#f3f6ff;padding:70px 0 76px;position:relative;overflow:hidden}
+header .kicker{color:var(--accent);letter-spacing:.22em;font-size:11.5px;font-weight:750;text-transform:uppercase}
+header h1{font-size:clamp(42px,7vw,84px);line-height:1.0;margin:18px 0 14px;font-weight:750;letter-spacing:-.03em;max-width:12ch}
+header h1 .dot{color:var(--accent)}
+header h1 em{font-style:normal;color:#f3f6ff}
+header p.sub{color:#b9c6de;max-width:430px;font-size:16.5px}
+header .small{color:#64759a;font-size:12.5px;margin-top:12px}
+.aster{position:absolute;right:34px;top:26px;color:var(--accent);font-size:22px}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:30px;position:relative;z-index:2}
+.chip{background:transparent;border:1px solid #273348;color:#c9d6ee;border-radius:7px;padding:7px 13px;font-size:12.5px}
+.chip b{color:var(--accent);font-weight:750}
+@media (max-width:860px){}
+
+/* ---- light pages below ---- */
+section{padding:58px 0 10px}
+.sec-no{display:flex;align-items:baseline;gap:0;margin-bottom:8px;color:var(--muted);font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:750}
+.sec-no .n{color:inherit}
+.sec-no .n::after{content:" /";color:#9aa9c2;margin:0 7px}
+h2{font-size:clamp(27px,3.6vw,40px);margin:4px 0 16px;letter-spacing:-.025em;font-weight:750;line-height:1.12;color:var(--ink)}
+h2 em{font-style:italic;font-weight:400;color:#7487a8}
+h3{font-size:19px;margin:30px 0 10px;font-weight:750;color:var(--ink)}
+.lead{color:var(--muted);font-size:16.5px;max-width:780px}
+.hr-dot{border:0;border-top:2px solid var(--line);margin:46px 0 0;position:relative}
+.hr-dot::after{content:"";position:absolute;left:0;top:-4px;width:9px;height:9px;border-radius:50%;background:var(--accent)}
+hr{border:0;border-top:2px solid var(--line);margin:46px 0 0}
+
+.grid{display:grid;gap:15px;margin:22px 0}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+/* white cards, hairline borders — research-engine style */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:19px 21px;box-shadow:0 10px 26px -20px rgba(16,24,40,.35)}
+.card h4{margin:0 0 7px;font-size:15.5px;font-weight:750;letter-spacing:-.01em;color:var(--ink)}
+.card p{margin:0;color:var(--muted);font-size:14.2px}
+.card .tag{display:inline-block;background:var(--selected);color:#2b3a86;border-radius:6px;font-size:11px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;margin-bottom:10px}
+.card.dark{background:var(--panel);border-color:var(--panel);color:#dbe5f5}
+.card.dark p{color:#a8bbd8}
+.card.dark .tag{background:#172640;color:var(--accent);border:0}
+.card.lime{background:var(--accent);border-color:var(--accent)}
+.card.lime p{color:#2c3a0a}
+.card.lime .tag{background:rgba(0,0,0,.12);color:#1a2405}
+
+.stat{border-radius:9px;padding:19px 21px;background:var(--surface);border:1px solid var(--line)}
+.stat h4{margin:0 0 9px;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:750}
+.stat ul{margin:0;padding-left:18px;font-size:14.5px;color:var(--ink)}
+.stat li{margin:5px 0}
+.stat.done{border-top:4px solid #22c55e}
+.stat.wip{border-top:4px solid #f5a524}
+.stat.dec{border-top:4px solid var(--cobalt)}
+
+/* cobalt full-bleed band (the "More rooms" move) */
+.band{background:var(--cobalt);color:#fff;padding:64px 0 58px;margin-top:56px}
+.band .sec-no{color:#c7cdff}
+.band .sec-no .n{color:var(--accent)}
+.band .sec-no .n::after{color:#aab2ff}
+.band h2{color:#fff}
+.band h2 em{color:var(--accent);font-style:italic;font-weight:750}
+.band .lead{color:#dfe4ff}
+.band .stat{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.28);color:#fff}
+.band .stat h4{color:#c7cdff}
+.band .stat ul{color:#fff}
+.band .stat.done{border-top-color:#bfffce}
+.band .stat.wip{border-top-color:#ffe2a3}
+.band .stat.dec{border-top-color:var(--accent)}
+.band .card{box-shadow:none}
+.band .band-foot{margin-top:26px;color:#dfe4ff;font-size:16px}
+.band .band-foot b{color:var(--accent)}
+
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px;background:var(--surface);border-radius:9px;overflow:hidden;border:1px solid var(--line)}
+th{background:var(--cobalt);color:#fff;text-align:left;padding:9px 12px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:750}
+td{padding:8px 12px;border-top:1px solid var(--line);vertical-align:top;color:#31405c}
+tr td:first-child{font-weight:650;color:var(--ink)}
+.ok{color:#15803d;font-weight:750}
+.warn{color:#b45309;font-weight:750}
+.mut{color:var(--muted)}
+
+figure{margin:24px 0;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:16px 12px 6px;overflow-x:auto;box-shadow:0 10px 26px -20px rgba(16,24,40,.35)}
+figure svg{display:block;margin:0 auto;max-width:100%;height:auto}
+figcaption{color:var(--muted);font-size:12.5px;text-align:center;padding:8px 6px 4px;letter-spacing:.03em}
+.sv-box{fill:#ffffff;stroke:#101828;stroke-width:1.6}
+.sv-dark{fill:var(--panel);stroke:var(--panel)}
+.sv-ind{fill:var(--cobalt);stroke:var(--cobalt);stroke-width:1.6}
+.sv-lime{fill:var(--accent);stroke:var(--accent);stroke-width:1.6}
+.sv-t{font:650 12.5px var(--font);fill:#101828}
+.sv-tw{font:650 12.5px var(--font);fill:#ffffff}
+.sv-ts{font:500 11px var(--font);fill:#5b6b85}
+.sv-tl{font:750 11px var(--font);fill:var(--cobalt);letter-spacing:.06em}
+.sv-a{stroke:#101828;stroke-width:1.8;fill:none;marker-end:url(#ar)}
+.sv-ai{stroke:var(--cobalt);stroke-width:1.8;fill:none;marker-end:url(#ari)}
+.sv-al{stroke:#8ab015;stroke-width:1.8;fill:none;marker-end:url(#arl)}
+.sv-pill{fill:var(--panel)}
+.sv-pill-t{font:750 12px ui-monospace,monospace;fill:var(--accent)}
+
+.tl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;margin:26px 0;position:relative}
+.tl .step{background:var(--surface);border:1px solid var(--line);border-right:0;padding:15px 13px;min-height:130px}
+.tl .step:first-child{border-radius:9px 0 0 9px}
+.tl .step:last-child{border-right:1px solid var(--line);border-radius:0 9px 9px 0}
+.tl .step:nth-child(odd){border-top:4px solid var(--cobalt)}
+.tl .step:nth-child(even){border-top:4px solid var(--accent)}
+.tl .dot{width:28px;height:28px;border-radius:7px;background:var(--accent);color:#101b2a;display:flex;align-items:center;justify-content:center;font-weight:750;font-size:13px;margin-bottom:8px}
+.tl .step h5{margin:0 0 5px;font-size:14px;font-weight:750;color:var(--ink)}
+.tl .step p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.45}
+
+.case{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--cobalt);border-radius:9px;padding:15px 17px;margin:11px 0}
+.case h5{margin:0 0 6px;font-size:15px;font-weight:750;color:var(--ink)}
+.case .row{display:flex;gap:10px;font-size:14px;margin:4px 0}
+.case .row b{flex:0 0 90px;color:var(--cobalt);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;padding-top:3px}
+.case .row span{color:#31405c}
+.case.sym{border-left-color:#f5a524}
+
+footer{background:var(--bg);color:#8fa1c4;margin-top:0;padding:44px 0 56px;font-size:14px}
+footer h6{color:#e7eef7;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 11px;font-weight:750}
+footer a{color:var(--accent);display:inline-block;margin:4px 16px 4px 0}
+footer .fine{color:#5c6f92;font-size:12px;margin-top:20px}
+@media (max-width:760px){.tl{grid-template-columns:1fr}.tl .step{border-right:1px solid var(--line);border-radius:0!important}.tl .step:first-child{border-radius:9px 9px 0 0!important}}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <span class="brand">Petrable <i>●</i> Blueprint</span>
+  <span class="links">
+    <a href="#s1">Stack</a><a href="#s2">SDLC</a><a href="#s3">HLD</a><a href="#s4">LLD</a>
+    <a href="#s5">Workflow</a><a href="#s6">Inventory</a><a href="#s7">Playbook</a>
+    <a href="#s8">Testing</a><a href="#s9">Status</a><a href="#s10">Rules</a>
+  </span>
+</div></nav>
+
+<header><div class="wrap">
+  <span class="aster">&#10035;</span>
+
+
+  <div class="kicker">KAF World Apps · System blueprint</div>
+  <h1>Free models.<br>Native apps.<br><em>Everything in one blueprint.</em></h1>
+  <p class="sub">The full software delivery record for Petrable — prompt-to-app builder for
+  iOS + macOS — from discovery through architecture, integration testing and release:
+  diagrams, workflows, tech stack and every troubleshooting case file, contained in this page.</p>
+  <div class="chips">
+    <span class="chip ok">UI suite <b>6 / 6 green</b></span>
+    <span class="chip">Providers <b>7 keyed</b></span>
+    <span class="chip">Deploy <b>focused-panther-579</b></span>
+    <span class="chip">iOS <b>installed on FlyPhone17</b></span>
+    <span class="chip">macOS <b>Petrable.app shipped</b></span>
+    <span class="chip">Policy <b>free-only · no paid fallback</b></span>
+  </div>
+</div></header>
+
+<!-- 01 TECH STACK -->
+<section id="s1"><div class="wrap">
+  <div class="sec-no"><span class="n">01</span><span class="k">Technology stack</span></div>
+  <h2>The pieces, <em>named plainly</em></h2>
+  <p class="lead">Every layer is free-tier or owned infrastructure. Secrets live server-side only — the apps ship zero keys.</p>
+  <div class="grid g3">
+    <div class="card"><span class="tag">Client</span><h4>SwiftUI · iOS 17+ / macOS</h4><p>Targets <code>Forge</code> (iPhone) &amp; <code>KeithableMac</code> → ships as <b>Petrable</b>. xcodegen <code>project.yml</code> is the project source of truth.</p></div>
+    <div class="card"><span class="tag">Backend</span><h4>Convex (TypeScript)</h4><p>Functions: projects · messages · builder · voice · models · <b>freeAi router</b> · system. Dev deployment <code>focused-panther-579</code>.</p></div>
+    <div class="card"><span class="tag">Inference</span><h4>7 free providers</h4><p>Gemini → Groq → NVIDIA → GitHub → OpenRouter → Cerebras → Cloudflare. Tiered fast / balanced / smart.</p></div>
+    <div class="card"><span class="tag">Web runtime</span><h4>Daytona sandboxes</h4><p>Managed API + per-sandbox toolbox proxy for exec/upload; preview URLs on <code>daytonaproxy01</code>.</p></div>
+    <div class="card"><span class="tag">iOS runtime</span><h4>Mac Worker + Chorus</h4><p>Local Xcode compiles → unsigned IPA / device install path; cloud builds repair compile errors.</p></div>
+    <div class="card"><span class="tag">Voice</span><h4>Groq Whisper</h4><p>Mic → text transcription server-side (free). No paid STT; OpenAI path removed with its dead key.</p></div>
+    <div class="card"><span class="tag">Quality</span><h4>XCTest UI suite</h4><p>6 end-to-end tests incl. prompt → live preview; evidence as <code>xcresult</code> bundles.</p></div>
+    <div class="card"><span class="tag">Signing</span><h4>Apple team V892V3PC6T</h4><p>Dev certs in keychain; automatic signing; Wi-Fi install over paired device <code>FlyPhone17</code>.</p></div>
+    <div class="card"><span class="tag">Docs</span><h4>Markdown set + this hub</h4><p>Blueprint · AGENTS runbook · Free-providers board · README — linked at the foot of this page.</p></div>
+  </div>
+  <hr>
+</div></section>
+
+<!-- 02 SDLC -->
+<section id="s2"><div class="wrap">
+  <div class="sec-no"><span class="n">02</span><span class="k">Full SDLC · discovery → release</span></div>
+  <h2>How the project was <em>delivered</em></h2>
+  <div class="tl">
+    <div class="step"><div class="dot">1</div><h5>Discovery</h5><p>Free-only mandate; strip OpenAI/Anthropic; keep Daytona + Mac worker; product renamed <b>Petrable</b>; brand family identified.</p></div>
+    <div class="step"><div class="dot">2</div><h5>Design</h5><p>Tier router with ordered fallback chain; keys in Convex env only; any single key keeps the product alive.</p></div>
+    <div class="step"><div class="dot">3</div><h5>Architecture</h5><p>HLD/LLD (below); provider contract pinned by live probes; Daytona proxy contract reverse-engineered from vendor SDK.</p></div>
+    <div class="step"><div class="dot">4</div><h5>Implementation</h5><p><code>freeAi.ts</code> · <code>builder.ts</code> · <code>voice.ts</code> · rename sweep · de-branding sweep · provider keys.</p></div>
+    <div class="step"><div class="dot">5</div><h5>SIT</h5><p>Each seam proven live: app⇄Convex, Convex⇄7 providers, Convex⇄Daytona to <code>status: live</code>, voice⇄Groq, signing⇄devices.</p></div>
+    <div class="step"><div class="dot">6</div><h5>Test &amp; Q&amp;A</h5><p>6/6 UI suite (E2E demo ~70 s); flake forensics protocol; owner screenshots traced to stale sources.</p></div>
+    <div class="step"><div class="dot">7</div><h5>Release</h5><p>macOS shipped to /Applications; iOS installed over Wi-Fi; push / TestFlight remain owner decisions.</p></div>
+  </div>
+  <div class="grid g2">
+    <div class="card dark"><span class="tag">Workflow · dev loop</span>
+      <pre><code>edit → xcodegen generate        # project.yml is truth
+     → xcodebuild test|build   # ARCHS=arm64, no sim signing
+     → xcresulttool forensics  # exact failure text
+     → convex dev --once       # push backend (dev!)
+     → live provider smoke     # status-code matrix</code></pre></div>
+    <div class="card"><span class="tag">Workflow · incident</span>
+      <pre><code>symptom → evidence ladder
+  1 xcresult summary/tests
+  2 UI hierarchy at failure
+  3 screenshots around window
+  4 reproduce ×3 (flake vs break)
+→ root cause → fix code, never the assertion</code></pre></div>
+  </div>
+  <hr>
+</div></section>
+
+<!-- 03 HLD -->
+<section id="s3"><div class="wrap">
+  <div class="sec-no"><span class="n">03</span><span class="k">HLD · high-level design</span></div>
+  <h2>Topology at a <em>glance</em></h2>
+  <figure>
+  <svg viewBox="0 0 1020 520" width="1020">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#101828"/></marker>
+      <marker id="ari" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4653f4"/></marker>
+      <marker id="arl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8ab015"/></marker>
+    </defs>
+    <text x="20" y="30" class="sv-tl">CLIENTS</text>
+    <rect x="20" y="48" width="200" height="92" rx="14" class="sv-box"/>
+    <text x="38" y="76" class="sv-t">iPhone · SwiftUI</text>
+    <text x="38" y="98" class="sv-ts">Petrable.app · iOS 17+</text>
+    <text x="38" y="118" class="sv-ts">prompt · mic · preview</text>
+    <rect x="20" y="160" width="200" height="92" rx="14" class="sv-box"/>
+    <text x="38" y="188" class="sv-t">Mac · SwiftUI</text>
+    <text x="38" y="210" class="sv-ts">Petrable.app (shipped)</text>
+    <text x="38" y="230" class="sv-ts">+ Xcode dev loop</text>
+
+    <text x="290" y="30" class="sv-tl">BACKEND · CONVEX</text>
+    <rect x="290" y="48" width="300" height="380" rx="16" class="sv-ind"/>
+    <text x="310" y="78" class="sv-t" style="fill:#2B3A9E">focused-panther-579 (dev)</text>
+    <rect x="310" y="96" width="260" height="34" rx="9" class="sv-box"/><text x="324" y="118" class="sv-ts">projects · messages · files</text>
+    <rect x="310" y="140" width="260" height="44" rx="9" class="sv-box"/>
+    <text x="324" y="160" class="sv-t">builder.build / buildMobile</text>
+    <text x="324" y="176" class="sv-ts">queued→…→live state machine</text>
+    <rect x="310" y="194" width="260" height="52" rx="9" fill="#0B131F"/>
+    <text x="324" y="216" class="sv-tw">freeAi ★ tier router</text>
+    <text x="324" y="234" class="sv-ts" style="fill:#9FB9E8">fast · balanced · smart chains</text>
+    <rect x="310" y="256" width="260" height="34" rx="9" class="sv-box"/><text x="324" y="278" class="sv-ts">voice.transcribe (Groq Whisper)</text>
+    <rect x="310" y="300" width="260" height="34" rx="9" class="sv-box"/><text x="324" y="322" class="sv-ts">models → FreeTier mapping</text>
+    <rect x="310" y="344" width="260" height="34" rx="9" class="sv-box"/><text x="324" y="366" class="sv-ts">env keys — only secret store</text>
+    <text x="310" y="406" class="sv-ts">AppConfig.swift hardcodes this URL</text>
+
+    <text x="670" y="30" class="sv-tl">FREE MODEL PROVIDERS</text>
+    <rect x="670" y="48" width="330" height="216" rx="14" class="sv-lime"/>
+    <text x="688" y="74" class="sv-ts" style="fill:#4C6B08">ordered fallback chain — keys drop out if absent</text>
+    <text x="688" y="100" class="sv-t">1 Gemini · 2 Groq · 3 NVIDIA</text>
+    <text x="688" y="124" class="sv-t">4 GitHub · 5 OpenRouter</text>
+    <text x="688" y="148" class="sv-t">6 Cerebras · 7 Cloudflare</text>
+    <text x="688" y="176" class="sv-ts">401/403/404/429 → next provider</text>
+    <text x="688" y="196" class="sv-ts">300s timeout → surfaced at once</text>
+    <text x="688" y="216" class="sv-ts">every model ID live-verified</text>
+    <text x="688" y="240" class="sv-ts" style="fill:#4C6B08">see FREE_PROVIDERS.md for the board</text>
+
+    <text x="670" y="296" class="sv-tl">DAYTONA</text>
+    <rect x="670" y="314" width="330" height="88" rx="14" class="sv-box"/>
+    <text x="688" y="340" class="sv-t">mgmt API + toolbox proxy</text>
+    <text x="688" y="362" class="sv-ts">{proxy}/{sandboxId}/process/execute</text>
+    <text x="688" y="382" class="sv-ts">files/upload-v2 · preview-url</text>
+
+    <text x="670" y="440" class="sv-tl">MAC WORKER</text>
+    <rect x="670" y="458" width="330" height="48" rx="14" class="sv-box"/>
+    <text x="688" y="480" class="sv-t">polls jobs → Xcode → IPA</text>
+    <text x="688" y="498" class="sv-ts">local Mac, outbound only</text>
+
+    <path class="sv-a" d="M220 94 H286"/>
+    <text x="224" y="86" class="sv-ts">HTTPS</text>
+    <path class="sv-a" d="M220 206 H286"/>
+    <path class="sv-ai" d="M590 220 H666"/>
+    <text x="596" y="212" class="sv-ts" style="fill:#4154EF">Bearer chat</text>
+    <path class="sv-ai" d="M590 330 H666"/>
+    <text x="596" y="322" class="sv-ts" style="fill:#4154EF">REST</text>
+    <path class="sv-al" d="M590 466 H666"/>
+    <text x="596" y="458" class="sv-ts" style="fill:#4C6B08">poll</text>
+  </svg>
+  <figcaption>HLD — clients → Convex → free providers · sandboxes · worker. Trust boundary: all keys server-side.</figcaption>
+  </figure>
+  <hr>
+</div></section>
+
+<!-- 04 LLD -->
+<section id="s4"><div class="wrap">
+  <div class="sec-no"><span class="n">04</span><span class="k">LLD · low-level design</span></div>
+  <h2>Two state machines <em>carry the product</em></h2>
+
+  <h3>4.1 · The free-model router</h3>
+  <figure>
+  <svg viewBox="0 0 1020 300" width="1020">
+    <rect x="14" y="40" width="120" height="46" rx="23" class="sv-pill"/>
+    <text x="44" y="68" class="sv-pill-t">TIER IN</text>
+    <path class="sv-a" d="M134 63 H168"/>
+    <g>
+      <rect x="170" y="40" width="104" height="46" rx="12" class="sv-lime"/><text x="188" y="68" class="sv-t">1 Gemini</text>
+      <rect x="286" y="40" width="96" height="46" rx="12" class="sv-lime"/><text x="302" y="68" class="sv-t">2 Groq</text>
+      <rect x="394" y="40" width="104" height="46" rx="12" class="sv-lime"/><text x="410" y="68" class="sv-t">3 NVIDIA</text>
+      <rect x="510" y="40" width="104" height="46" rx="12" class="sv-lime"/><text x="524" y="68" class="sv-t">4 GitHub</text>
+      <rect x="626" y="40" width="126" height="46" rx="12" class="sv-lime"/><text x="640" y="68" class="sv-t">5 OpenRouter</text>
+      <rect x="764" y="40" width="112" height="46" rx="12" class="sv-lime"/><text x="778" y="68" class="sv-t">6 Cerebras</text>
+      <rect x="888" y="40" width="118" height="46" rx="12" class="sv-lime"/><text x="900" y="68" class="sv-t">7 Cloudflare</text>
+    </g>
+    <path class="sv-a" d="M274 63 H286 M382 63 H394 M498 63 H510 M614 63 H626 M752 63 H764 M876 63 H888"/>
+    <rect x="170" y="150" width="836" height="44" rx="12" class="sv-ind"/>
+    <text x="196" y="177" class="sv-t" style="fill:#2B3A9E">on 429 rate-limit · 404 retired-model · 401/403 bad key · budget-400 → try NEXT provider</text>
+    <path class="sv-ai" d="M222 86 V150 M334 86 V150 M446 86 V150 M562 86 V150 M689 86 V150 M820 86 V150 M947 86 V150" stroke-dasharray="4 5"/>
+    <rect x="170" y="226" width="836" height="48" rx="12" class="sv-box"/>
+    <text x="196" y="248" class="sv-t">success → return text (empty counts as failure)</text>
+    <text x="196" y="266" class="sv-ts">all seven failed → "Every free model provider failed — name: reason · …" surfaced to the app</text>
+    <path class="sv-a" d="M588 194 V226"/>
+  </svg>
+  <figcaption>LLD — freeAi chain: ordered attempts, classified failures, single graceful error.</figcaption>
+  </figure>
+
+  <h3>4.2 · Build pipeline (builder.build)</h3>
+  <figure>
+  <svg viewBox="0 0 1020 240" width="1020">
+    <g>
+      <rect x="14" y="50" width="118" height="44" rx="22" class="sv-box"/><text x="40" y="77" class="sv-t">queued</text>
+      <rect x="150" y="50" width="140" height="44" rx="22" class="sv-box"/><text x="164" y="77" class="sv-t">generating</text>
+      <rect x="308" y="50" width="118" height="44" rx="22" class="sv-box"/><text x="332" y="77" class="sv-t">sandbox</text>
+      <rect x="444" y="50" width="130" height="44" rx="22" class="sv-box"/><text x="458" y="77" class="sv-t">uploading</text>
+      <rect x="592" y="50" width="120" height="44" rx="22" class="sv-box"/><text x="610" y="77" class="sv-t">starting</text>
+      <rect x="730" y="50" width="96" height="44" rx="22" fill="#DCFCE7" stroke="#16A34A" stroke-width="1.6"/><text x="754" y="77" class="sv-t" style="fill:#15803D">live</text>
+    </g>
+    <path class="sv-a" d="M132 72 H150 M290 72 H308 M426 72 H444 M574 72 H592 M712 72 H730"/>
+    <text x="150" y="34" class="sv-ts">callFreeModel</text>
+    <text x="318" y="34" class="sv-ts">POST /sandbox</text>
+    <text x="446" y="34" class="sv-ts">proxy mkdir + upload-v2 ×N</text>
+    <text x="602" y="34" class="sv-ts">exec http.server :3000 ×5</text>
+    <text x="736" y="34" class="sv-ts">preview-url ✓</text>
+    <path class="sv-a" d="M652 94 V150" stroke="#B91C1C"/>
+    <rect x="560" y="150" width="230" height="44" rx="12" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.6"/>
+    <text x="582" y="177" class="sv-t" style="fill:#B91C1C">error · "Build failed" + message</text>
+    <rect x="844" y="50" width="164" height="44" rx="12" class="sv-ind"/>
+    <text x="858" y="70" class="sv-ts" style="fill:#2B3A9E">row: status · previewUrl</text>
+    <text x="858" y="86" class="sv-ts" style="fill:#2B3A9E">version++ · clearError</text>
+    <path class="sv-ai" d="M826 72 H844"/>
+    <text x="14" y="222" class="sv-ts">any throw → status=error (surfaced in-app with the exact provider/Daytona message)</text>
+  </svg>
+  <figcaption>LLD — web build states; the app’s status chip is this machine’s current node.</figcaption>
+  </figure>
+
+  <h3>4.3 · Provider contract (verified)</h3>
+  <table>
+    <tr><th>Provider</th><th>Env key</th><th>Smart</th><th>Balanced</th><th>Fast</th></tr>
+    <tr><td>Gemini</td><td><code>GEMINI_API_KEY</code></td><td colspan="3">gemini-3.8-flash</td></tr>
+    <tr><td>Groq</td><td><code>GROQ_API_KEY</code></td><td colspan="2">openai/gpt-oss-120b</td><td>openai/gpt-oss-20b</td></tr>
+    <tr><td>NVIDIA</td><td><code>NVIDIA_API_KEY</code></td><td>nemotron-3-ultra-550b</td><td colspan="2">nemotron-3.5-lightning-30b</td></tr>
+    <tr><td>GitHub</td><td><code>GITHUB_API_KEY</code></td><td>deepseek/DeepSeek-V3</td><td colspan="2">openai/gpt-4o-mini</td></tr>
+    <tr><td>OpenRouter</td><td><code>OPENROUTER_API_KEY</code></td><td colspan="2">qwen/qwen3.8-27b:free</td><td>nemotron-3.5-lightning:free</td></tr>
+    <tr><td>Cerebras</td><td><code>CEREBRAS_API_KEY</code></td><td colspan="3">qwen-3.8-27b <span class="mut">(env-pinned, £5 PayGo)</span></td></tr>
+    <tr><td>Cloudflare</td><td><code>CLOUDFLARE_API_KEY</code> + <code>_ACCOUNT_ID</code></td><td>gpt-oss-120b</td><td>deepseek-r1-distill-32b</td><td>llama-3.1-8b-fp8</td></tr>
+  </table>
+  <p class="mut">Menu keys → tiers: <code>free-smart</code> · <code>free-balanced</code> · <code>free-fast</code> · <code>fable-5</code> (smart). Default: <code>free-balanced</code>. Env override pattern: <code>&lt;PROVIDER&gt;_&lt;TIER&gt;_MODEL</code>.</p>
+  <hr>
+</div></section>
+
+<!-- 05 WORKFLOWS -->
+<section id="s5"><div class="wrap">
+  <div class="sec-no"><span class="n">05</span><span class="k">Workflows</span></div>
+  <h2>How work <em>actually moves</em></h2>
+  <div class="grid g2">
+    <div class="card"><span class="tag">End-user build</span>
+      <pre><code>type prompt (+ optional mic → Groq STT)
+ → projects.create {prompt, platform}
+ → schedule builder.build
+ → freeAi chain serves generation
+ → files saved → Daytona sandbox
+ → upload → server → preview probe
+ → status=live → previewButton appears
+ → tap → webview renders (asserted by ForgeDemoTest)</code></pre></div>
+    <div class="card"><span class="tag">Model incident (live)</span>
+      <pre><code>provider 404/429 reported?
+ → fetch provider /models catalogue
+ → status-code matrix: tiny request × candidate
+ → pin survivors in code + env
+ → convex dev --once
+ → re-run matrix after any provider incident
+(never trust remembered model IDs)</code></pre></div>
+    <div class="card"><span class="tag">Secret handling</span>
+      <pre><code>set:  npx convex env set NAME "$(security \
+        find-generic-password -s svc -w)"
+list: env list | cut -d= -f1     # names only
+leak? → rotate that provider key immediately
+rules: no secrets in output/docs/chat echoes</code></pre></div>
+    <div class="card"><span class="tag">Device install (Wi-Fi)</span>
+      <pre><code>xcodebuild … -destination id=&lt;udid&gt; \
+  DEVELOPMENT_TEAM=V892V3PC6T -allowProvisioningUpdates
+ → devicectl device install app   # paired over Wi-Fi
+ → locked screen blocks auto-launch (iOS policy)
+ → launch after unlock, or tap the icon</code></pre></div>
+  </div>
+  <hr>
+</div></section>
+
+<!-- 06 INVENTORY -->
+<section id="s6"><div class="wrap">
+  <div class="sec-no"><span class="n">06</span><span class="k">Platform inventory</span></div>
+  <h2>IDs, commands, <em>locations</em></h2>
+  <table>
+    <tr><th>Thing</th><th>Value</th></tr>
+    <tr><td>Repo</td><td><code>…/06_PROJECTS_AND_DEMOS/01_Rilable_Project/rilable</code> (microSD) · GitHub <code>rbrown101010/rilable</code> (last push 2026-06-11)</td></tr>
+    <tr><td>Backend</td><td>Convex dev <code>focused-panther-579</code> (hardcoded in <code>AppConfig.swift</code>) · idle prod <code>focused-mule-635</code></td></tr>
+    <tr><td>Signing</td><td>Team <code>V892V3PC6T</code> · Apple Development/ Distribution certs (Keith Fleishman)</td></tr>
+    <tr><td>Device</td><td><code>FlyPhone17</code> iPhone 17 Pro — udid <code>2B1E2C82-73B2-5349-9640-118A61B8B5BA</code> · sim <code>2F897A22-…</code></td></tr>
+    <tr><td>Keychain</td><td>services <code>codex-{groq,nvidia,openrouter}-api-key</code> — pipe, never print</td></tr>
+    <tr><td>Brand tokens</td><td><code>…/00_Keith_Outputs/Gradus Apply/2026-09-24 Today KAF palette/</code></td></tr>
+    <tr><td>Test evidence</td><td><code>ios/build/run14-allsuite.xcresult</code> (6/6)</td></tr>
+    <tr><td>Storage order</td><td>5 TB UUID <code>C09342A1-…</code> ≥500 GiB reserve · microSD = working vol · internal = apps only</td></tr>
+  </table>
+  <pre><code># backend push (NON-interactive → dev deployment)
+cd backend &amp;&amp; npx tsc --noEmit -p convex/tsconfig.json &amp;&amp; npx convex dev --once
+
+# full test suite (sim)
+xcodebuild test -project ios/Forge.xcodeproj -scheme Forge \
+  -destination 'id=2F897A22-E49D-4C25-A0C4-F9E15B99E20A' \
+  -derivedDataPath ios/build/build-x -resultBundlePath ios/build/runN.xcresult \
+  ARCHS=arm64 CODE_SIGNING_ALLOWED=NO</code></pre>
+  <hr>
+</div></section>
+
+<!-- 07 PLAYBOOK -->
+<section id="s7"><div class="wrap">
+  <div class="sec-no"><span class="n">07</span><span class="k">Troubleshooting playbook · case files</span></div>
+  <h2>What broke, how we <em>knew</em>, what fixed it</h2>
+
+  <div class="case sym"><h5>1 · UI test failed with no useful message</h5>
+    <div class="row"><b>Symptom</b><span><code>XCTAssertTrue failed</code> only.</span></div>
+    <div class="row"><b>Method</b><span>Evidence ladder: xcresult summary/tests → UI hierarchy → screenshots around window → reproduce ×3.</span></div>
+    <div class="row"><b>Outcome</b><span>Flaky timing test isolated to a sleep-vs-appearance race; fixed waits, 3/3 green. Never weaken assertions.</span></div></div>
+
+  <div class="case sym"><h5>2 · App showed “Claude is designing your app” (string not in source)</h5>
+    <div class="row"><b>Symptom</b><span>Status text absent from every repo file.</span></div>
+    <div class="row"><b>Method</b><span>Three-homes audit: client build ⇄ deployed backend ⇄ stored row. Grepped source, then all 23 DB rows.</span></div>
+    <div class="row"><b>Outcome</b><span>Stale deployment/build — not code. Fresh builds said “Free AI is designing your app”. Always date the screenshot first.</span></div></div>
+
+  <div class="case sym"><h5>3 · Every model suddenly 404</h5>
+    <div class="row"><b>Symptom</b><span>Gemini 2.5 retired · Groq llama retired · OpenRouter :free slugs removed.</span></div>
+    <div class="row"><b>Method</b><span>Fetch live catalogues; run a status-code matrix (tiny request per candidate); pin survivors; keep the chain.</span></div>
+    <div class="row"><b>Outcome</b><span>Model IDs are config, not constants — drift degrades to the next provider instead of an outage.</span></div></div>
+
+  <div class="case sym"><h5>4 · Daytona404 “Cannot POST” (blocked every build)</h5>
+    <div class="row"><b>Symptom</b><span>Owner’s original screenshot: dead execute route — independent of model keys.</span></div>
+    <div class="row"><b>Method</b><span>Vendor OpenAPI → discovered toolbox-proxy-url; llms.txt for map; <code>npm pack</code> the official SDK and grep basePath/auth.</span></div>
+    <div class="row"><b>Outcome</b><span>New contract <code>{proxy}/{sandboxId}/process/execute</code> + Bearer → builds reached <code>status: live</code>. SDK source &gt; blog posts.</span></div></div>
+
+  <div class="case sym"><h5>5 · Secrets printed by an unfiltered env list</h5>
+    <div class="row"><b>Symptom</b><span>Six key values landed in tool output.</span></div>
+    <div class="row"><b>Method</b><span>Immediately rotated the non-owner-pasted keys (GitHub/Daytona/NVIDIA); new rule: <code>env list | cut -d= -f1</code>.</span></div>
+    <div class="row"><b>Outcome</b><span>Hygiene baked into docs; keychain piping pattern documented.</span></div></div>
+
+  <div class="case sym"><h5>6 · Volume degraded to multi-second reads</h5>
+    <div class="row"><b>Symptom</b><span>Builds starved; processes in UN state; root <code>ls</code> hung &gt;45 s.</span></div>
+    <div class="row"><b>Method</b><span>Latency matrix per volume (1ms / 9ms / 1–27s) → root readdir vs deep stat probe → found a pathological entry → ruled out Spotlight/Time Machine → bounded live fsck (clean).</span></div>
+    <div class="row"><b>Outcome</b><span>Physical-layer fault (cable/port) — stopped bulk jobs, continued read-only per storage standing order, reported with evidence.</span></div></div>
+
+  <div class="case sym"><h5>7 · Convex deploy went to the wrong deployment</h5>
+    <div class="row"><b>Symptom</b><span><code>convex deploy</code> targeted prod and refused non-interactive prompting.</span></div>
+    <div class="row"><b>Method</b><span>Read CLI help; confirmed configured deployment; used <code>convex dev --once</code> for dev pushes.</span></div>
+    <div class="row"><b>Outcome</b><span>Rule recorded: env commands default to dev, deploy defaults to prod — always confirm target.</span></div></div>
+
+  <div class="case sym"><h5>8 · Howler stack-overflow spam (web preview)</h5>
+    <div class="row"><b>Symptom</b><span>148× <code>RangeError: Maximum call stack</code> from audio queue after registering sounds at boot.</span></div>
+    <div class="row"><b>Method</b><span>A/B control: disable one feature (barks) → 0 spam; enable → 148. Isolate registration timing vs audio unlock.</span></div>
+    <div class="row"><b>Outcome</b><span>Register sounds only after <code>audio.initiated</code> (same as ambients) → 0 spam, playback verified.</span></div></div>
+  <hr>
+</div></section>
+
+<!-- 08 TESTING -->
+<section id="s8"><div class="wrap">
+  <div class="sec-no"><span class="n">08</span><span class="k">Testing strategy · definition of done</span></div>
+  <h2>Green means <em>proven</em></h2>
+  <div class="grid g3">
+    <div class="card"><span class="tag">Layer 1</span><h4>Static</h4><p><code>tsc --noEmit</code> · <code>node --check</code> · <code>xcodebuild -list</code> (xcodegen parse).</p></div>
+    <div class="card"><span class="tag">Layer 2</span><h4>SIT seams</h4><p>Live provider matrix · Daytona smoke to <code>status: live</code> + preview fetch · voice present in Groq’s catalogue · signing verify.</p></div>
+    <div class="card"><span class="tag">Layer 3</span><h4>E2E</h4><p><code>ForgeDemoTest</code>: prompt → free generate → sandbox → live → webview. Red ≈ 490 s, green ≈ 70 s.</p></div>
+  </div>
+  <table>
+    <tr><th>Test</th><th>Proves</th><th>State</th></tr>
+    <tr><td>ForgeDemoTest/testBuildAppFromPrompt</td><td>whole product loop on free models</td><td class="ok">PASS (66–93 s)</td></tr>
+    <tr><td>VoiceModelSpotTest/testModelMenuAndMic</td><td>model menu + mic (STT) surface</td><td class="ok">PASS</td></tr>
+    <tr><td>VoiceModelSpotTest/testHomePlusMenuShowsActions</td><td>home composer menu</td><td class="ok">PASS</td></tr>
+    <tr><td>ForgeTourTest/testTourLiveProject</td><td>tour over a live project</td><td class="ok">PASS</td></tr>
+    <tr><td>ForgeTourTest/testToolConnectionsSheet</td><td>tool connections sheet</td><td class="ok">PASS</td></tr>
+    <tr><td>MobileSpotTest/testMobileProject</td><td>mobile project flow</td><td class="ok">PASS</td></tr>
+  </table>
+  <hr>
+</div></section>
+
+<!-- 09 STATUS -->
+<section id="s9" class="band"><div class="wrap">
+  <div class="sec-no"><span class="n">09</span><span class="k">Status &amp; handoff</span></div>
+  <h2>Done, in flight, <em>your calls</em></h2>
+  <div class="grid g3">
+    <div class="stat done"><h4>Finished ✓</h4><ul>
+      <li>7-provider free router live &amp; verified</li>
+      <li>Daytona pipeline → real live previews</li>
+      <li>6/6 test suite green</li>
+      <li>Petrable rename + Claude sweep</li>
+      <li>macOS shipped; iPhone installed (Wi-Fi)</li>
+      <li>Keys rotated/set; docs complete (this hub)</li>
+    </ul></div>
+    <div class="stat wip"><h4>In flight 🔨</h4><ul>
+      <li>Brand retheme (KAF/Relo/Sermo tokens)</li>
+      <li>Rebuild + reinstall both platforms</li>
+      <li>Repeat stability runs</li>
+    </ul></div>
+    <div class="stat dec"><h4>Needs you 🎯</h4><ul>
+      <li>“push it” → GitHub commit + links</li>
+      <li>TestFlight → bundle-id choice</li>
+      <li>Text-to-speech (voice out) → say yes/no</li>
+      <li>“V” voice company → Vapi or Voiceflow?</li>
+    </ul></div>
+  </div>
+  <p class="lead">Handoff-ready by design: any model or developer can start at <code>AGENTS.md</code>,
+  understand this page, run the suite to know if they broke something, and take §9 items as the
+  precise backlog. The blueprint markdown carries the full prose version of everything above.</p>
+  <hr>
+</div></section>
+
+<!-- 10 RULES -->
+<section id="s10"><div class="wrap">
+  <div class="sec-no"><span class="n">10</span><span class="k">Golden rules</span></div>
+  <h2>Pin these <em>above the desk</em></h2>
+  <div class="grid g2">
+    <div class="card lime"><h4>1 — Free-only. Forever.</h4><p>No paid fallback. One key works; zero keys drops the provider, never the product.</p></div>
+    <div class="card lime"><h4>2 — Evidence before edits</h4><p>xcresult → hierarchy → screenshots → reproduce ×3. Fix root causes, never assertions.</p></div>
+    <div class="card lime"><h4>3 — Live probes over memory</h4><p>Third-party routes, model IDs, quotas: verify with real requests before trusting them.</p></div>
+    <div class="card lime"><h4>4 — Secrets never in output</h4><p>Names-only listings; keychain piping; rotate the moment anything leaks.</p></div>
+    <div class="card lime"><h4>5 — project.yml is truth</h4><p>Hand-edited pbxproj vanishes on the next xcodegen run — edit the yml.</p></div>
+    <div class="card lime"><h4>6 — Names matter</h4><p>Petrable to the world; match the KAF family voice, brand tokens and care in presentation.</p></div>
+  </div>
+  <hr>
+</div></section>
+
+<footer><div class="wrap">
+  <h6>Source documents</h6>
+  <a href="../docs/BLUEPRINT.md">BLUEPRINT.md (full prose)</a>
+  <a href="../AGENTS.md">AGENTS.md (setup runbook)</a>
+  <a href="../FREE_PROVIDERS.md">FREE_PROVIDERS.md (status board)</a>
+  <a href="../README.md">README.md</a>
+  <a href="../scripts/README.md">scripts/README.md</a>
+  <p class="fine">Generated for Keith &amp; AI collaborators · KAF World Digital brand tokens
+  (paper/ink/indigo/lime) · Petrable — free models, native apps · © 2026</p>
+</div></footer>
+
+</body>
+</html>

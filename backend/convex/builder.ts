@@ -6,7 +6,8 @@ import type { ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import JSZip from "jszip";
-import { resolveModel } from "./models";
+import { resolveModel, preferredProvider } from "./models";
+import { callFreeModel } from "./freeAi";
 import {
   renderPbxproj,
   XCSCHEME,
@@ -129,21 +130,45 @@ async function startSandbox(id: string): Promise<void> {
   await waitForSandboxState(id, "started", 180_000);
 }
 
+// Daytona moved command execution behind a per-sandbox toolbox proxy
+// (the old inline /toolbox/{id}/toolbox/process/execute route now 404s).
+// Resolve the proxy URL once per sandbox and reuse it for every call.
+const toolboxUrlCache = new Map<string, string>();
+
+async function toolboxBase(sandboxId: string): Promise<string> {
+  const hit = toolboxUrlCache.get(sandboxId);
+  if (hit) return hit;
+  const data = await daytonaJson<{ url: string }>(
+    `/sandbox/${sandboxId}/toolbox-proxy-url`,
+    {},
+    30_000
+  );
+  toolboxUrlCache.set(sandboxId, data.url);
+  return data.url;
+}
+
 async function execInSandbox(
   id: string,
   command: string,
   timeoutSec = 60,
   cwd = HOME_DIR
 ): Promise<{ exitCode: number; result: string }> {
-  return await daytonaJson<{ exitCode: number; result: string }>(
-    `/toolbox/${id}/toolbox/process/execute`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ command, cwd, timeout: timeoutSec }),
-    },
-    (timeoutSec + 30) * 1000
-  );
+  const base = await toolboxBase(id);
+  const res = await fetch(`${base}/${id}/process/execute`, {
+    method: "POST",
+    headers: { ...daytonaHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ command, cwd, timeout: timeoutSec }),
+    signal: AbortSignal.timeout((timeoutSec + 30) * 1000),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Daytona process/execute failed (${res.status}): ${body.slice(0, 300)}`);
+  }
+  const data = (await res.json().catch(() => null)) as {
+    exitCode?: number;
+    result?: string;
+  } | null;
+  return { exitCode: data?.exitCode ?? 0, result: data?.result ?? "" };
 }
 
 async function uploadFile(
@@ -151,16 +176,16 @@ async function uploadFile(
   remotePath: string,
   content: string
 ): Promise<void> {
+  const base = await toolboxBase(sandboxId);
   const form = new FormData();
   form.append(
     "file",
     new Blob([content], { type: "application/octet-stream" }),
     remotePath.split("/").pop() ?? "file"
   );
-  const res = await daytona(
-    `/toolbox/${sandboxId}/toolbox/files/upload?path=${encodeURIComponent(remotePath)}`,
-    { method: "POST", body: form },
-    60_000
+  const res = await fetch(
+    `${base}/${sandboxId}/files/upload-v2?path=${encodeURIComponent(remotePath)}`,
+    { method: "POST", headers: daytonaHeaders(), body: form },
   );
   if (!res.ok) {
     const body = await res.text().catch(() => "");
@@ -244,6 +269,10 @@ function chorusUserId(): string {
   return id;
 }
 
+function chorusConfigured(): boolean {
+  return Boolean(process.env.CHORUS_API_KEY && process.env.CHORUS_USER_ID);
+}
+
 async function chorus(
   path: string,
   init: RequestInit = {},
@@ -274,7 +303,7 @@ async function chorusJson<T>(
 function bundleIdFor(name: string, projectId: string): string {
   const slug =
     name.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20) || "app";
-  return `com.rilable.app.${slug}${projectId.slice(-6).toLowerCase()}`;
+  return `com.keithable.app.${slug}${projectId.slice(-6).toLowerCase()}`;
 }
 
 async function zipMobileProject(
@@ -320,6 +349,10 @@ async function startMobileBuild(
   isEdit: boolean,
   repairCount = 0
 ): Promise<void> {
+  if (!chorusConfigured()) {
+    await queueMacMobileBuild(ctx, projectId);
+    return;
+  }
   await setStatus(ctx, projectId, "building", "Compiling your iOS app in the cloud (2–5 min)");
   await log(ctx, projectId, "📦 Uploading source to Chorus…");
   const bundleId = bundleIdFor(name, projectId);
@@ -348,6 +381,24 @@ async function startMobileBuild(
     summary,
     repairCount,
   });
+}
+
+async function queueMacMobileBuild(
+  ctx: ActionCtx,
+  projectId: Id<"projects">
+): Promise<void> {
+  await ctx.runMutation(internal.projects.update, {
+    id: projectId,
+    status: "mac_queued",
+    statusDetail: "Waiting for your Mac to compile the iPhone app",
+    clearError: true,
+  });
+  await log(
+    ctx,
+    projectId,
+    "💻 Mobile build queued for your Mac. Keep Keithable open here; the Mac worker will compile it with Xcode and report back.",
+    "agent"
+  );
 }
 
 /// Pull deduplicated `file.swift:line: error: …` lines out of the Azure build
@@ -410,7 +461,7 @@ async function postLoginLink(
 }
 
 // ---------------------------------------------------------------------------
-// Claude code generation
+// Free AI code generation (Gemini → Groq → OpenRouter fallback chain)
 // ---------------------------------------------------------------------------
 
 const OUTPUT_FORMAT = `OUTPUT FORMAT — follow EXACTLY, with no markdown fences and no commentary before or after:
@@ -434,13 +485,13 @@ const DESIGN_RULES = `RULES:
 - Everything must WORK. Every button does something real. No placeholders, no dead links, no TODOs, no console errors.
 - Keep the whole app under ~700 lines total.`;
 
-const GENERATE_SYSTEM = `You are Rilable, an elite web-app builder. You produce complete, beautiful, fully-working single-page web apps from a short request.
+const GENERATE_SYSTEM = `You are Keithable, an elite web-app builder. You produce complete, beautiful, fully-working single-page web apps from a short request.
 
 ${OUTPUT_FORMAT}
 
 ${DESIGN_RULES}`;
 
-const EDIT_SYSTEM = `You are Rilable, an elite web-app builder. You are updating an existing app. You receive the app's current files, recent conversation, and a change request. Re-output the ENTIRE app — every file in full, including unchanged files. Files you omit will be DELETED. Keep the existing APP_NAME and APP_EMOJI unless the user asks to change them; SUMMARY should describe what you changed.
+const EDIT_SYSTEM = `You are Keithable, an elite web-app builder. You are updating an existing app. You receive the app's current files, recent conversation, and a change request. Re-output the ENTIRE app — every file in full, including unchanged files. Files you omit will be DELETED. Keep the existing APP_NAME and APP_EMOJI unless the user asks to change them; SUMMARY should describe what you changed.
 
 ${OUTPUT_FORMAT}
 
@@ -470,19 +521,19 @@ const MOBILE_RULES = `RULES:
 - Everything must WORK. Every button does something real. No placeholders, no TODOs.
 - Keep the whole app under ~600 lines total.`;
 
-const MOBILE_GENERATE_SYSTEM = `You are Rilable, an elite iOS engineer. You produce complete, beautiful, fully-working SwiftUI apps from a short request.
+const MOBILE_GENERATE_SYSTEM = `You are Keithable, an elite iOS engineer. You produce complete, beautiful, fully-working SwiftUI apps from a short request.
 
 ${MOBILE_OUTPUT_FORMAT}
 
 ${MOBILE_RULES}`;
 
-const MOBILE_EDIT_SYSTEM = `You are Rilable, an elite iOS engineer. You are updating an existing SwiftUI app. You receive the app's current files, recent conversation, and a change request. Re-output the ENTIRE app — every file in full, including unchanged files. Files you omit will be DELETED. Keep the existing APP_NAME and APP_EMOJI unless the user asks to change them; SUMMARY should describe what you changed.
+const MOBILE_EDIT_SYSTEM = `You are Keithable, an elite iOS engineer. You are updating an existing SwiftUI app. You receive the app's current files, recent conversation, and a change request. Re-output the ENTIRE app — every file in full, including unchanged files. Files you omit will be DELETED. Keep the existing APP_NAME and APP_EMOJI unless the user asks to change them; SUMMARY should describe what you changed.
 
 ${MOBILE_OUTPUT_FORMAT}
 
 ${MOBILE_RULES}`;
 
-const MOBILE_FIX_SYSTEM = `You are Rilable, an elite iOS engineer. The SwiftUI app below FAILED to compile. Fix every compiler error and re-output the ENTIRE app — every file in full, including unchanged files. Do not change the app's design or features beyond what the fixes require. Keep the existing APP_NAME and APP_EMOJI; SUMMARY should stay a description of the app (not the fix).
+const MOBILE_FIX_SYSTEM = `You are Keithable, an elite iOS engineer. The SwiftUI app below FAILED to compile. Fix every compiler error and re-output the ENTIRE app — every file in full, including unchanged files. Do not change the app's design or features beyond what the fixes require. Keep the existing APP_NAME and APP_EMOJI; SUMMARY should stay a description of the app (not the fix).
 
 ${MOBILE_OUTPUT_FORMAT}
 
@@ -499,7 +550,7 @@ function fixUserPrompt(
 }
 
 /// Teach the generator that every app has free access to the AI proxy
-/// (Vercel AI Gateway, key injected server-side by convex/http.ts).
+/// (keyless free models, injected server-side by convex/http.ts).
 function aiSkill(platform: "web" | "mobile"): string {
   const site = process.env.CONVEX_SITE_URL;
   if (!site) return "";
@@ -508,72 +559,18 @@ function aiSkill(platform: "web" | "mobile"): string {
     return `
 
 AI SKILL — every app you build has FREE access to a built-in AI endpoint (auth is injected server-side; never put an API key in your code and never ask the user for one). Use it whenever the request involves AI: chatbots, writing, summarizing, brainstorming, translation, Q&A, analysis, content generation.
-- const res = await fetch("${endpoint}", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "openai/gpt-4o-mini", messages: [{ role: "user", content: prompt }] }) });
+- const res = await fetch("${endpoint}", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "gemini-2.5-flash", messages: [{ role: "user", content: prompt }] }) });
 - OpenAI-compatible response: (await res.json()).choices[0].message.content
-- Models: "openai/gpt-4o-mini" (fast default) · "anthropic/claude-sonnet-4-6" (smartest) · "anthropic/claude-haiku-4-5" (quick + clever)
+- Models: any id works — the proxy routes to free models server-side (Gemini/Groq/OpenRouter). "gemini-2.5-flash" is the fast default.
 - Non-streaming only. Always show a visible loading/thinking state while waiting and a friendly inline error if the call fails.`;
   }
   return `
 
 AI SKILL — every app you build has FREE access to a built-in AI endpoint (auth is injected server-side; never embed an API key and never ask the user for one). Use it whenever the request involves AI: chatbots, writing, summarizing, brainstorming, translation, Q&A, analysis.
-- POST ${endpoint} via URLSession with header Content-Type: application/json and JSON body {"model":"openai/gpt-4o-mini","messages":[{"role":"user","content":"..."}]}
+- POST ${endpoint} via URLSession with header Content-Type: application/json and JSON body {"model":"gemini-2.5-flash","messages":[{"role":"user","content":"..."}]}
 - Decode the OpenAI-compatible response and read choices[0].message.content
-- Models: "openai/gpt-4o-mini" (fast default) · "anthropic/claude-sonnet-4-6" (smartest)
+- Models: any id works — the proxy routes to free models server-side (Gemini/Groq/OpenRouter)
 - Calls to THIS endpoint are allowed and encouraged (the avoid-network-calls rule does not apply to it). Show a loading state while waiting; handle failures with a friendly message.`;
-}
-
-async function callClaude(system: string, user: string, model: string): Promise<string> {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error("ANTHROPIC_API_KEY is not set on the Convex deployment");
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": key,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 16000,
-      stream: true,
-      system,
-      messages: [{ role: "user", content: user }],
-    }),
-    signal: AbortSignal.timeout(540_000),
-  });
-  if (!res.ok || !res.body) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Claude API error (${res.status}): ${body.slice(0, 300)}`);
-  }
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let text = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data:")) continue;
-      const payload = line.slice(5).trim();
-      if (!payload || payload === "[DONE]") continue;
-      try {
-        const event = JSON.parse(payload);
-        if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
-          text += event.delta.text;
-        }
-        if (event.type === "error") {
-          throw new Error(`Claude stream error: ${event.error?.message ?? "unknown"}`);
-        }
-      } catch (err) {
-        if (err instanceof Error && err.message.startsWith("Claude stream error")) throw err;
-      }
-    }
-  }
-  if (!text.trim()) throw new Error("Claude returned an empty response");
-  return text;
 }
 
 type GeneratedApp = {
@@ -681,9 +678,9 @@ export const build = internalAction({
         await daytona(`/sandbox/${project.sandboxId}`, { method: "DELETE" }).catch(() => {});
       }
 
-      await setStatus(ctx, projectId, "generating", "Claude is designing your app");
-      await log(ctx, projectId, "🧠 Claude is writing your app…");
-      const raw = await callClaude(GENERATE_SYSTEM + aiSkill("web"), buildUserPrompt(project.prompt, "web"), resolveModel(project.model));
+      await setStatus(ctx, projectId, "generating", "Free AI is designing your app");
+      await log(ctx, projectId, "🧠 Free AI is writing your app…");
+      const raw = await callFreeModel(GENERATE_SYSTEM + aiSkill("web"), buildUserPrompt(project.prompt, "web"), resolveModel(project.model), preferredProvider(project.model));
       const app = parseGeneration(raw, "web");
       await ctx.runMutation(internal.projects.update, {
         id: projectId,
@@ -757,16 +754,16 @@ export const edit = internalAction({
       const request =
         [...conversation].reverse().find((m) => m.role === "user")?.content ?? project.prompt;
 
-      await setStatus(ctx, projectId, "updating", "Claude is applying your changes");
-      await log(ctx, projectId, "🛠️ Claude is updating your app…");
-      const raw = await callClaude(
+      await setStatus(ctx, projectId, "updating", "Free AI is applying your changes");
+      await log(ctx, projectId, "🛠️ Free AI is updating your app…");
+      const raw = await callFreeModel(
         EDIT_SYSTEM + aiSkill("web"),
         editUserPrompt(
           files.map((f) => ({ path: f.path, content: f.content })),
           conversation,
           request
         ),
-        resolveModel(project.model)
+        resolveModel(project.model), preferredProvider(project.model)
       );
       const app = parseGeneration(raw, "web");
       await ctx.runMutation(internal.files.saveAll, { projectId, files: app.files });
@@ -913,12 +910,12 @@ export const buildMobile = internalAction({
     const project = await ctx.runQuery(internal.projects.getInternal, { id: projectId });
     if (!project) return null;
     try {
-      await setStatus(ctx, projectId, "generating", "Claude is designing your iOS app");
-      await log(ctx, projectId, "🧠 Claude is writing your iOS app in Swift…");
-      const raw = await callClaude(
+      await setStatus(ctx, projectId, "generating", "Free AI is designing your iOS app");
+      await log(ctx, projectId, "🧠 Free AI is writing your iOS app in Swift…");
+      const raw = await callFreeModel(
         MOBILE_GENERATE_SYSTEM + aiSkill("mobile"),
         buildUserPrompt(project.prompt, "mobile"),
-        resolveModel(project.model)
+        resolveModel(project.model), preferredProvider(project.model)
       );
       const app = parseGeneration(raw, "mobile");
       await ctx.runMutation(internal.projects.update, {
@@ -964,16 +961,16 @@ export const editMobile = internalAction({
       const request =
         [...conversation].reverse().find((m) => m.role === "user")?.content ?? project.prompt;
 
-      await setStatus(ctx, projectId, "updating", "Claude is applying your changes");
-      await log(ctx, projectId, "🛠️ Claude is updating your iOS app…");
-      const raw = await callClaude(
+      await setStatus(ctx, projectId, "updating", "Free AI is applying your changes");
+      await log(ctx, projectId, "🛠️ Free AI is updating your iOS app…");
+      const raw = await callFreeModel(
         MOBILE_EDIT_SYSTEM + aiSkill("mobile"),
         editUserPrompt(
           files.map((f) => ({ path: f.path, content: f.content })),
           conversation,
           request
         ),
-        resolveModel(project.model)
+        resolveModel(project.model), preferredProvider(project.model)
       );
       const app = parseGeneration(raw, "mobile");
       await ctx.runMutation(internal.files.saveAll, { projectId, files: app.files });
@@ -1047,27 +1044,27 @@ export const pollMobileBuild = internalAction({
       }
       if (job.state === "failed") {
         const errors = await extractBuildErrors(buildJobId);
-        // Self-heal: feed compiler errors back to Claude and rebuild.
+        // Self-heal: feed compiler errors back to the free model and rebuild.
         if (repairs < 2 && errors.length > 0) {
           await setStatus(
             ctx,
             projectId,
             "generating",
-            "Build hit compile errors — Claude is fixing them"
+            "Build hit compile errors — Free AI is fixing them"
           );
           await log(
             ctx,
             projectId,
-            `🔧 Compile ${errors.length === 1 ? "error" : "errors"} found — Claude is fixing ${errors.length === 1 ? "it" : "them"}…`
+            `🔧 Compile ${errors.length === 1 ? "error" : "errors"} found — Free AI is fixing ${errors.length === 1 ? "it" : "them"}…`
           );
           const files = await ctx.runQuery(internal.files.getAll, { projectId });
-          const raw = await callClaude(
+          const raw = await callFreeModel(
             MOBILE_FIX_SYSTEM + aiSkill("mobile"),
             fixUserPrompt(
               files.map((f) => ({ path: f.path, content: f.content })),
               errors.slice(0, 8)
             ),
-            resolveModel(project.model)
+            resolveModel(project.model), preferredProvider(project.model)
           );
           const app = parseGeneration(raw, "mobile");
           await ctx.runMutation(internal.files.saveAll, { projectId, files: app.files });
@@ -1163,6 +1160,20 @@ export const provideInstallLink = internalAction({
           ctx,
           projectId,
           "❌ I don't have a finished cloud build to sign yet — rebuild the app first, then ask again.",
+          "agent"
+        );
+        return null;
+      }
+      if (/^\/|^file:/.test(project.appUrl)) {
+        await ctx.runMutation(internal.projects.update, {
+          id: projectId,
+          status: "live",
+          statusDetail: "IPA built on your Mac",
+        });
+        await log(
+          ctx,
+          projectId,
+          `✅ ${project.name} is already built on your Mac.\n\nIPA: ${project.appUrl}\n\nCodex can sign and install this through Signulous from the Mac.`,
           "agent"
         );
         return null;
