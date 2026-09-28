@@ -24,7 +24,7 @@ struct WelcomeView: View {
 
                     Text("Petrable")
                         .font(.system(size: 46 * scale, weight: .bold, design: .serif))
-                        .foregroundStyle(Theme.textPrimary)
+                        .foregroundStyle(.white)
                         .minimumScaleFactor(0.82)
                         .lineLimit(1)
                         .padding(.top, 22)
@@ -32,7 +32,7 @@ struct WelcomeView: View {
                     Text("Build anything.\nRight from your phone.")
                         .font(.system(size: 17 * scale, weight: .medium))
                         .multilineTextAlignment(.center)
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.heroMuted)
                         .lineSpacing(4)
                         .padding(.top, 10)
                         .opacity(appeared ? 1 : 0)
@@ -58,7 +58,7 @@ struct WelcomeView: View {
 
                     Text("One user · No sign-in needed")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Theme.textSecondary.opacity(0.85))
+                        .foregroundStyle(Color(red:185/255,green:198/255,blue:222/255).opacity(0.85))
                         .padding(.bottom, 10)
                 }
                 .padding(.horizontal, 28)

@@ -49,7 +49,7 @@ extension View {
         #else
         self
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Theme.bg, for: .navigationBar)
+            .toolbarBackground(Theme.hero, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         #endif
     }

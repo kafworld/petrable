@@ -50,7 +50,7 @@ struct HomeView: View {
                         Text("Runs on free AI models")
                             .font(.system(size: 13, weight: .medium))
                     }
-                    .foregroundStyle(Theme.textSecondary)
+            .foregroundStyle(Theme.heroMuted)
                     .padding(.bottom, 4)
                 }
                 .frame(maxWidth: homeContentMaxWidth)
@@ -65,7 +65,7 @@ struct HomeView: View {
                 ChatView(projectId: id)
             }
         }
-        .tint(Theme.blue)
+        .tint(.white)
         .sheet(isPresented: $showToolsSheet) {
             ToolConnectionsSheet(status: vm.systemStatus) { selectedPlatform in
                 platform = selectedPlatform
@@ -139,7 +139,7 @@ struct HomeView: View {
                     .frame(width: 28, height: 28)
                 Text("Petrable")
                     .font(.system(size: 27, weight: .bold, design: .serif))
-                    .foregroundStyle(Theme.textPrimary)
+                    .foregroundStyle(.white)
             }
         )
         .padding(.horizontal, 16)
@@ -185,7 +185,7 @@ struct HomeView: View {
     private var greeting: some View {
         Text("Got an idea, \(AppConfig.userName)?")
             .font(.system(size: 30, weight: .semibold, design: .serif))
-            .foregroundStyle(Theme.textPrimary)
+            .foregroundStyle(.white)
             .padding(.top, 26)
     }
 
@@ -213,7 +213,7 @@ struct HomeView: View {
                 Text(label)
                     .font(.system(size: 15, weight: .semibold))
             }
-            .foregroundStyle(platform == value ? .black : Theme.textSecondary)
+            .foregroundStyle(platform == value ? .black : Theme.heroMuted)
             .padding(.horizontal, 20)
             .frame(height: 38)
             .background {
@@ -505,7 +505,7 @@ private struct ToolConnectionsSheet: View {
                 .padding(.top, 20)
                 .padding(.bottom, 26)
             }
-            .background(Theme.bg.ignoresSafeArea())
+            .background(Theme.hero.ignoresSafeArea())
             .navigationTitle("Tool connections")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -543,17 +543,17 @@ private struct ToolConnectionsSheet: View {
             HStack(spacing: 8) {
                 Image(systemName: "lock.shield.fill")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Theme.textSecondary)
+                    .foregroundStyle(Theme.heroMuted)
                 Text(AppConfig.convexDeploymentURL.replacingOccurrences(of: "https://", with: ""))
                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
-                    .foregroundStyle(Theme.textPrimary.opacity(0.84))
+                    .foregroundStyle(Color(red:201/255,green:212/255,blue:234/255))
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 12)
             .frame(height: 38)
-            .background(Theme.surfaceLight.opacity(0.62), in: Capsule())
+            .background(Theme.panel.opacity(0.9), in: Capsule())
             .overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1))
         }
         .padding(16)
@@ -656,7 +656,7 @@ struct ProjectsDrawer: View {
                     .frame(width: 24, height: 24)
                 Text("Your builds")
                     .font(.system(size: 22, weight: .bold, design: .serif))
-                    .foregroundStyle(Theme.textPrimary)
+                    .foregroundStyle(.white)
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
@@ -674,7 +674,7 @@ struct ProjectsDrawer: View {
                         .background(Theme.surface, in: Circle())
                     Text("New build")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
+                        .foregroundStyle(.white)
                     Spacer()
                 }
                 .padding(.horizontal, 20)
@@ -684,7 +684,7 @@ struct ProjectsDrawer: View {
             .buttonStyle(PressableButtonStyle())
 
             Rectangle()
-                .fill(Color.black.opacity(0.04))
+                .fill(Color.white.opacity(0.07))
                 .frame(height: 1)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 8)
@@ -692,7 +692,7 @@ struct ProjectsDrawer: View {
             if vm.loaded && vm.projects.isEmpty {
                 Text("No builds yet.")
                     .font(.system(size: 15))
-                    .foregroundStyle(Theme.textSecondary)
+                    .foregroundStyle(Theme.heroMuted)
                     .padding(20)
             } else {
                 ScrollView {
