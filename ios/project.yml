@@ -52,7 +52,7 @@ targets:
       properties:
         CFBundleDisplayName: Petrable
         UILaunchScreen: {}
-        UIUserInterfaceStyle: Dark
+        UIUserInterfaceStyle: Light
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         CFBundleURLTypes:
           - CFBundleURLName: com.kafworlddigital.petrable

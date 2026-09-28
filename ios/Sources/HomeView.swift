@@ -50,7 +50,7 @@ struct HomeView: View {
                         Text("Runs on free AI models")
                             .font(.system(size: 13, weight: .medium))
                     }
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(Theme.textSecondary)
                     .padding(.bottom, 4)
                 }
                 .frame(maxWidth: homeContentMaxWidth)
@@ -65,7 +65,7 @@ struct HomeView: View {
                 ChatView(projectId: id)
             }
         }
-        .tint(.white)
+        .tint(Theme.blue)
         .sheet(isPresented: $showToolsSheet) {
             ToolConnectionsSheet(status: vm.systemStatus) { selectedPlatform in
                 platform = selectedPlatform
@@ -139,7 +139,7 @@ struct HomeView: View {
                     .frame(width: 28, height: 28)
                 Text("Petrable")
                     .font(.system(size: 27, weight: .bold, design: .serif))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.textPrimary)
             }
         )
         .padding(.horizontal, 16)
@@ -159,15 +159,15 @@ struct HomeView: View {
                 }
                 Text("Connect all your tools")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.textPrimary)
                 Image(systemName: "arrow.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.textPrimary)
             }
             .padding(.horizontal, 14)
             .frame(height: 52)
             .background(.black.opacity(0.55), in: Capsule())
-            .overlay(Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
+            .overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1))
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityIdentifier("connectToolsButton")
@@ -178,14 +178,14 @@ struct HomeView: View {
             .font(.system(size: 11, weight: .bold))
             .foregroundStyle(color)
             .frame(width: 26, height: 26)
-            .background(.white, in: Circle())
+            .background(Theme.surface, in: Circle())
             .overlay(Circle().strokeBorder(.black.opacity(0.25), lineWidth: 0.5))
     }
 
     private var greeting: some View {
         Text("Got an idea, \(AppConfig.userName)?")
             .font(.system(size: 30, weight: .semibold, design: .serif))
-            .foregroundStyle(.white)
+            .foregroundStyle(Theme.textPrimary)
             .padding(.top, 26)
     }
 
@@ -196,7 +196,7 @@ struct HomeView: View {
         }
         .padding(4)
         .background(Color(red: 0.118, green: 0.118, blue: 0.125).opacity(0.96), in: Capsule())
-        .overlay(Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
+        .overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1))
         .padding(.top, 26)
     }
 
@@ -238,7 +238,7 @@ struct HomeView: View {
                 axis: .vertical
             )
             .font(.system(size: 17))
-            .foregroundStyle(.white)
+            .foregroundStyle(Theme.textPrimary)
             .tint(Theme.blue)
             .lineLimit(1...5)
             .focused($promptFocused)
@@ -279,7 +279,7 @@ struct HomeView: View {
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 21, weight: .medium))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                 }
                 .accessibilityIdentifier("homePlusMenu")
 
@@ -305,7 +305,7 @@ struct HomeView: View {
                         Image(systemName: "chevron.down")
                             .font(.system(size: 12, weight: .semibold))
                     }
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.textPrimary)
                 }
                 .accessibilityIdentifier("modelMenu")
 
@@ -375,7 +375,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Mobile builds need your Mac")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                     Text("Web builds are ready. Start the Mac worker to compile native iPhone apps with Xcode.")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(Theme.textSecondary)
@@ -510,7 +510,7 @@ private struct ToolConnectionsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                 }
             }
         }
@@ -530,7 +530,7 @@ private struct ToolConnectionsSheet: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(status.mobileBuildsReady ? "Connected through Convex" : "Web builds are ready")
                         .font(.system(size: 22, weight: .bold, design: .serif))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                     Text(status.mobileBuildsReady
                          ? "Petrable uses server-side environment keys, so the phone does not need separate sign-ins for each tool."
                          : "Mobile builds need the Mac worker. Until then, Petrable will steer you to web builds instead of failing late.")
@@ -548,7 +548,7 @@ private struct ToolConnectionsSheet: View {
                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
-                    .foregroundStyle(.white.opacity(0.84))
+                    .foregroundStyle(Theme.textPrimary.opacity(0.84))
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 12)
@@ -576,7 +576,7 @@ private struct ToolConnectionsSheet: View {
                 HStack(spacing: 8) {
                     Text(connection.name)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                     Text(connection.status)
                         .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(connection.color)
@@ -656,7 +656,7 @@ struct ProjectsDrawer: View {
                     .frame(width: 24, height: 24)
                 Text("Your builds")
                     .font(.system(size: 22, weight: .bold, design: .serif))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.textPrimary)
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
@@ -671,10 +671,10 @@ struct ProjectsDrawer: View {
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.black)
                         .frame(width: 32, height: 32)
-                        .background(.white, in: Circle())
+                        .background(Theme.surface, in: Circle())
                     Text("New build")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                     Spacer()
                 }
                 .padding(.horizontal, 20)
@@ -684,7 +684,7 @@ struct ProjectsDrawer: View {
             .buttonStyle(PressableButtonStyle())
 
             Rectangle()
-                .fill(Color.white.opacity(0.07))
+                .fill(Color.black.opacity(0.04))
                 .frame(height: 1)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 8)
@@ -716,7 +716,11 @@ struct ProjectsDrawer: View {
                         }
                     }
                     .padding(.top, 4)
-                    .padding(.bottom, 30)
+                    #if os(macOS)
+            .padding(.bottom, 46)
+#else
+            .padding(.bottom, 30)
+#endif
                 }
             }
 
@@ -738,7 +742,7 @@ struct ProjectsDrawer: View {
                 HStack(spacing: 6) {
                     Text(project.name)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                     if project.isMobile {
                         Image(systemName: "iphone")

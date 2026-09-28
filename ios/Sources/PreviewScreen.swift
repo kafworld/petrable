@@ -20,9 +20,9 @@ struct PreviewScreen: View {
                     mobileReadyView(project)
                 } else {
                     ZStack {
-                        Color.black
+                        Theme.bg
                         VStack(spacing: 14) {
-                            ProgressView().tint(.white)
+                            ProgressView().tint(Theme.blue)
                             Text(vm.project?.statusDetail ?? "Getting things ready…")
                                 .font(.system(size: 15))
                                 .foregroundStyle(Theme.textSecondary)
@@ -35,12 +35,12 @@ struct PreviewScreen: View {
 
             bottomBar
         }
-        .background(Color.black.ignoresSafeArea())
+        .background(Theme.bg.ignoresSafeArea())
     }
 
     private func mobileReadyView(_ project: Project) -> some View {
         ZStack {
-            Color.black
+            Theme.bg
             VStack(spacing: 18) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 48, weight: .semibold))
@@ -49,7 +49,7 @@ struct PreviewScreen: View {
                 VStack(spacing: 8) {
                     Text("\(project.name) is Apple-ready")
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                         .multilineTextAlignment(.center)
                     Text(project.statusDetail ?? "IPA built on your Mac")
                         .font(.system(size: 16, weight: .medium))
@@ -64,7 +64,7 @@ struct PreviewScreen: View {
                     } label: {
                         Label("Copy IPA Path", systemImage: "doc.on.doc")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Theme.textPrimary)
                             .padding(.horizontal, 18)
                             .frame(height: 48)
                             .background(Theme.surfaceLight.opacity(0.85), in: Capsule())
@@ -89,7 +89,7 @@ struct PreviewScreen: View {
                     Text("Chat")
                         .font(.system(size: 17, weight: .semibold))
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.textPrimary)
                 .padding(.horizontal, 20)
                 .frame(height: 48)
                 .background(Theme.surfaceLight.opacity(0.85), in: Capsule())
@@ -108,14 +108,14 @@ struct PreviewScreen: View {
                     #if os(macOS)
                     Label("Open in Browser", systemImage: "safari")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                         .padding(.horizontal, 16)
                         .frame(height: 48)
                         .background(Theme.surfaceLight.opacity(0.85), in: Capsule())
                     #else
                     Image(systemName: "safari")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                         .frame(width: 48, height: 48)
                         .background(Theme.surfaceLight.opacity(0.85), in: Circle())
                     #endif
@@ -125,7 +125,7 @@ struct PreviewScreen: View {
                 ShareLink(item: url) {
                     Image(systemName: "square.and.arrow.up")
                         .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                         .frame(width: 48, height: 48)
                         .background(Theme.surfaceLight.opacity(0.85), in: Circle())
                 }
@@ -134,14 +134,14 @@ struct PreviewScreen: View {
         .padding(.horizontal, 12)
         .padding(.top, 10)
         .padding(.bottom, 4)
-        .background(Color.black)
+        .background(Theme.bg)
     }
 
     private func barCircle(systemName: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.textPrimary)
                 .frame(width: 48, height: 48)
                 .background(Theme.surfaceLight.opacity(0.85), in: Circle())
         }

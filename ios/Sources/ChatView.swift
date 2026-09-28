@@ -28,7 +28,7 @@ struct ChatView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Theme.bg.ignoresSafeArea()
             VStack(spacing: 0) {
                 topBar
                 messageList
@@ -126,7 +126,7 @@ struct ChatView: View {
                     HStack(spacing: 8) {
                         Text(project.name)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Theme.textPrimary)
                             .lineLimit(1)
                         Image(systemName: "chevron.down")
                             .font(.system(size: 12, weight: .semibold))
@@ -197,7 +197,7 @@ struct ChatView: View {
                     Spacer(minLength: 56)
                     Text(message.content)
                         .font(.system(size: 17))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Theme.textPrimary)
                         .padding(.horizontal, 18)
                         .padding(.vertical, 13)
                         .background(Theme.surfaceLight, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -267,7 +267,7 @@ struct ChatView: View {
                     VStack(alignment: .leading, spacing: 5) {
                         Text(error.title)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Theme.textPrimary)
                         Text(error.detail)
                             .font(.system(size: 15, weight: .medium))
                             .foregroundStyle(Theme.textSecondary)
@@ -383,13 +383,13 @@ struct ChatView: View {
                     } label: {
                         Text(suggestion)
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Theme.textPrimary)
                             .padding(.horizontal, 15)
                             .padding(.vertical, 11)
                             .background(Theme.surface, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 13, style: .continuous)
-                                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                                    .strokeBorder(Theme.stroke, lineWidth: 1)
                             )
                     }
                 }
@@ -413,7 +413,7 @@ struct ChatView: View {
                 axis: .vertical
             )
             .font(.system(size: 17))
-            .foregroundStyle(.white)
+            .foregroundStyle(Theme.textPrimary)
             .tint(Theme.blue)
             .lineLimit(1...4)
             .focused($focused)
@@ -429,7 +429,7 @@ struct ChatView: View {
                 }
                 if busy {
                     ZStack {
-                        Circle().fill(.white).frame(width: 44, height: 44)
+                        Circle().fill(Theme.lime).frame(width: 44, height: 44)
                         RoundedRectangle(cornerRadius: 4)
                             .fill(.black)
                             .frame(width: 15, height: 15)
@@ -437,7 +437,7 @@ struct ChatView: View {
                 } else if !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Button(action: send) {
                         ZStack {
-                            Circle().fill(.white).frame(width: 44, height: 44)
+                            Circle().fill(Theme.lime).frame(width: 44, height: 44)
                             if sending {
                                 ProgressView().tint(.black)
                             } else {
@@ -527,7 +527,7 @@ struct ChatView: View {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 11, weight: .semibold))
             }
-            .foregroundStyle(.white.opacity(0.92))
+            .foregroundStyle(Theme.textPrimary.opacity(0.92))
             .padding(.horizontal, 18)
             .frame(height: 44)
             .background(Theme.surfaceLight.opacity(0.85), in: Capsule())
@@ -573,7 +573,7 @@ struct MarkdownText: View {
             ForEach(Array(paragraphs.enumerated()), id: \.offset) { _, paragraph in
                 Text(attributed(paragraph))
                     .font(.system(size: 17))
-                    .foregroundStyle(.white.opacity(0.92))
+                    .foregroundStyle(Theme.textPrimary.opacity(0.92))
                     .lineSpacing(4)
                     .tint(Theme.blue)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -601,7 +601,7 @@ struct ComposerCircle: View {
     var body: some View {
         Image(systemName: systemName)
             .font(.system(size: 17, weight: .medium))
-            .foregroundStyle(.white.opacity(0.92))
+            .foregroundStyle(Theme.textPrimary.opacity(0.92))
             .frame(width: 44, height: 44)
             .background(Theme.surfaceLight.opacity(0.85), in: Circle())
     }
@@ -614,7 +614,7 @@ struct WorkingCard: View {
         VStack(alignment: .leading, spacing: 9) {
             Text("Working…")
                 .font(.system(size: 21, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.textPrimary)
             Text(detail ?? "Thinking")
                 .font(.system(size: 17))
                 .foregroundStyle(Theme.textSecondary)
@@ -642,7 +642,7 @@ struct BuildCard: View {
             HStack(alignment: .top) {
                 Text(title)
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.textPrimary)
                     .lineLimit(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "bookmark")
@@ -667,7 +667,7 @@ struct BuildCard: View {
         Button(action: action) {
             Text(label)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.textPrimary)
                 .frame(maxWidth: .infinity, minHeight: 50)
                 .contentShape(Rectangle())
         }

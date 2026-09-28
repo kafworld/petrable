@@ -7,7 +7,7 @@ struct DetailsSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.ignoresSafeArea()
+                Theme.bg.ignoresSafeArea()
                 if vm.files.isEmpty {
                     VStack(spacing: 12) {
                         Image(systemName: "doc.text")
@@ -52,7 +52,7 @@ struct DetailsSheet: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(file.path)
                     .font(.system(size: 15, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                 Text("\(file.language) · \(file.lineCount) lines")
                     .font(.system(size: 12))
@@ -73,11 +73,11 @@ struct CodeDetailView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Theme.bg.ignoresSafeArea()
             ScrollView([.vertical, .horizontal]) {
                 Text(file.content)
                     .font(.system(size: 12, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.9))
+                    .foregroundStyle(Theme.textPrimary.opacity(0.9))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16)
                     .textSelection(.enabled)
