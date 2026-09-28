@@ -34,7 +34,7 @@ pre-change backups → `backups/` in this repo · Convex dashboard →
 | Product | **Petrable** (renamed from Keithable/Rilable — name matters to the owner; internal targets still `Forge`/`KeithableMac`) |
 | What it is | Prompt → live web app + native iOS app builder (Lovable/Replit-mobile style) |
 | Repo | `…/06_PROJECTS_AND_DEMOS/01_Rilable_Project/rilable` on the microSD working volume; GitHub `rbrown101010/rilable` (last push **2026-06-11** — recent work is local & uncommitted) |
-| iOS app | SwiftUI, target `Forge`, scheme `Forge`, `.app` = `Forge.app`, display name **Petrable**, bundle `com.example.rilable`, deployment iOS 17+ |
+| iOS app | SwiftUI, target `Forge`, scheme `Forge`, `.app` = `Forge.app`, display name **Petrable**, bundle `com.kafworlddigital.petrable`, deployment iOS 17+ |
 | macOS app | target `KeithableMac`, product **`Petrable.app`**, bundle `com.keithfleishman.keithable.mac` |
 | Signing | Team **V892V3PC6T** (Keith Fleishman); certs in login keychain; Xcode auto-signing |
 | Backend | Convex (TypeScript), **dev deployment `focused-panther-579`** hardcoded in `ios/Sources/AppConfig.swift`; an unused prod deployment `focused-mule-635` exists |
@@ -100,7 +100,7 @@ SIT = the seams between systems; each seam was proven with a live probe, not a m
 ### 2.6 Release (in progress)
 - macOS: **shipped** — signed `Petrable.app` in `/Applications`, launches.
 - iOS: build green; physical install **waits for a connected device** (dev-sign + auto
-  app-id). TestFlight path needs the placeholder bundle id `com.example.rilable` re-registered
+  app-id). TestFlight path needs the placeholder bundle id `com.kafworlddigital.petrable` re-registered
   under team `V892V3PC6T` (owner decision).
 - Pending gates: owner commit/push approval; optional Cerebras/Cloudflare quota review;
   branding pass (§5.4) currently mid-flight.
