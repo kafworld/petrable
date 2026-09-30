@@ -26,6 +26,30 @@ final class DeepLinkRouter: ObservableObject {
         pendingProjectId = id
     }
 
+    /// Single entry point for forge:// URLs. Attached at the app root
+    /// (ForgeApp) as well as HomeView: on the current iOS beta the
+    /// scene receives UIOpenURLAction but a modifier-level .onOpenURL
+    /// deep in the tree never fires — registering at the root fixed it.
+    func handle(_ url: URL) {
+        NSLog("Forge: router got url=\(url.absoluteString) host=\(url.host ?? "nil") last=\(url.lastPathComponent)")
+        guard url.scheme == "forge" else { return }
+        switch url.host() {
+        case "home":
+            goHome()
+        case "project":
+            let id = url.lastPathComponent
+            guard !id.isEmpty, id != "/" else { return }
+            var tab: ProjectTab?
+            if let raw = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                .queryItems?.first(where: { $0.name == "tab" })?.value {
+                tab = DeepLinkRouter.tab(from: raw)
+            }
+            openProject(id, tab: tab)
+        default:
+            break
+        }
+    }
+
     func goHome() {
         pendingHome = true
     }

@@ -17,6 +17,9 @@ struct ForgeApp: App {
             }
             .animation(.easeInOut(duration: 0.4), value: hasEntered)
             .preferredColorScheme(.dark)
+            // Root-level URL capture: fires even when the deep modifier in
+            // HomeView misses the scene's UIOpenURLAction (iOS 27 beta).
+            .onOpenURL { DeepLinkRouter.shared.handle($0) }
         }
         #if os(macOS)
         .defaultSize(width: 1120, height: 760)

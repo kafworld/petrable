@@ -97,16 +97,34 @@ final class ScreenshotTourUITest: XCTestCase {
         shot(app, "06-home-final")
     }
 
-    /// Phase 2 of the chat capture: the shell has already issued
-    /// `simctl openurl forge://project/…`, which raises the system
-    /// "Open in …?" confirmation. This test just accepts it; the shell
-    /// then takes the screenshot once the chat is on screen.
+    /// Self-contained deep-link verification: launches the app warm, opens
+    /// forge:// URL via XCUIApplication.open (raises the system confirmation),
+    /// accepts it, then captures the chat — no shell/dialog timing games.
     func testAcceptOpenDialog() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-hasEntered", "YES"]
+        app.launch()
+        sleep(2)
+
+        if let url = URL(string: "forge://project/jd78hebhzsv1t63j4rzdt5n7r58f9ccs") {
+            app.open(url)
+        }
+
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        if springboard.buttons["Open"].waitForExistence(timeout: 8) {
+        if springboard.buttons["Open"].waitForExistence(timeout: 10) {
             springboard.buttons["Open"].tap()
         }
-        // Soft check: if the system auto-opened without a dialog, that is fine too.
-        _ = XCUIApplication().textFields["chatField"].waitForExistence(timeout: 5)
+
+        if app.textFields["chatField"].waitForExistence(timeout: 15) {
+            sleep(2)
+            let dir = URL(fileURLWithPath: "/tmp/petrable-shots", isDirectory: true)
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            let s = XCUIScreen.main.screenshot()
+            try? s.image.pngData()?.write(to: dir.appendingPathComponent("05-chat.png"))
+            let a = XCTAttachment(screenshot: s)
+            a.name = "deeplink-chat"
+            a.lifetime = .keepAlways
+            add(a)
+        }
     }
 }

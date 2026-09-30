@@ -416,22 +416,9 @@ struct HomeView: View {
     }
 
     private func handleDeepLink(_ url: URL) {
-        guard url.scheme == "forge" else { return }
-        switch url.host() {
-        case "home":
-            path = []
-        case "project":
-            let id = url.lastPathComponent
-            guard !id.isEmpty, id != "/" else { return }
-            var tab: ProjectTab?
-            if let raw = URLComponents(url: url, resolvingAgainstBaseURL: false)?
-                .queryItems?.first(where: { $0.name == "tab" })?.value {
-                tab = DeepLinkRouter.tab(from: raw)
-            }
-            DeepLinkRouter.shared.openProject(id, tab: tab)
-        default:
-            break
-        }
+        // Delegate to the shared router (also registered at the app root);
+        // pending id/home are consumed by the onReceive handlers above.
+        DeepLinkRouter.shared.handle(url)
     }
 }
 
