@@ -165,23 +165,38 @@ struct OrbIcon: View {
     let seed: String
     var size: CGFloat = 40
 
+    // Curated palette of harmonious jewel tones anchored in the cobalt/navy/cyan family
+    private static let curatedHues: [Double] = [
+        224.0 / 360.0, // Cobalt blue (#3548EB)
+        200.0 / 360.0, // Cyan / Sky blue (#0EA5E9)
+        245.0 / 360.0, // Royal Indigo (#4F46E5)
+        265.0 / 360.0, // Deep Iris (#7C3AED)
+        175.0 / 360.0, // Cool Teal (#0D9488)
+        155.0 / 360.0, // Emerald Mint (#059669)
+        210.0 / 360.0, // Steel Slate (#0284C7)
+        280.0 / 360.0, // Royal Purple (#9333EA)
+        35.0 / 360.0,  // Warm Amber (#D97706)
+        335.0 / 360.0, // Crimson Rose (#E11D48)
+    ]
+
     private var baseHue: Double {
         var hash = 0
         for scalar in seed.unicodeScalars {
             hash = (hash &* 31 &+ Int(scalar.value)) & 0xFFFF
         }
-        return Double(hash % 360) / 360.0
+        let index = abs(hash) % Self.curatedHues.count
+        return Self.curatedHues[index]
     }
 
     var body: some View {
         let h1 = baseHue
-        let h2 = (baseHue + 0.11).truncatingRemainder(dividingBy: 1.0)
+        let h2 = (baseHue + 0.08).truncatingRemainder(dividingBy: 1.0)
         Circle()
             .fill(
                 LinearGradient(
                     colors: [
-                        Color(hue: h1, saturation: 0.80, brightness: 0.98),
-                        Color(hue: h2, saturation: 0.90, brightness: 0.62),
+                        Color(hue: h1, saturation: 0.68, brightness: 0.92),
+                        Color(hue: h2, saturation: 0.78, brightness: 0.58),
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -190,7 +205,7 @@ struct OrbIcon: View {
             .overlay(
                 Circle().fill(
                     RadialGradient(
-                        colors: [.white.opacity(0.50), .clear],
+                        colors: [.white.opacity(0.45), .clear],
                         center: UnitPoint(x: 0.32, y: 0.26),
                         startRadius: 1,
                         endRadius: size * 0.6
@@ -199,6 +214,6 @@ struct OrbIcon: View {
             )
             .overlay(Circle().strokeBorder(.white.opacity(0.16), lineWidth: 0.8))
             .frame(width: size, height: size)
-            .shadow(color: Color(hue: h1, saturation: 0.85, brightness: 0.85).opacity(0.40), radius: 5, y: 2)
+            .shadow(color: Color(hue: h1, saturation: 0.70, brightness: 0.75).opacity(0.28), radius: 4, y: 2)
     }
 }

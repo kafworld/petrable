@@ -315,14 +315,18 @@ struct HomeView: View {
                 Button(action: submit) {
                     ZStack {
                         Circle()
-                            .fill(canSubmit ? Theme.lime : Theme.lime.opacity(0.85))
+                            .fill(canSubmit ? Theme.lime : Color.white.opacity(0.08))
                             .frame(width: 44, height: 44)
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(canSubmit ? Color.clear : Color.white.opacity(0.12), lineWidth: 1)
+                            )
                         if creating {
-                            ProgressView().tint(.black)
+                            ProgressView().tint(canSubmit ? .black : .white)
                         } else {
                             Image(systemName: "arrow.up")
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(canSubmit ? .black : Color.black.opacity(0.35))
+                                .foregroundStyle(canSubmit ? .black : Theme.heroMuted)
                         }
                     }
                 }
@@ -657,7 +661,7 @@ struct ProjectsDrawer: View {
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.black)
                         .frame(width: 32, height: 32)
-                        .background(Theme.surface, in: Circle())
+                        .background(Theme.lime, in: Circle())
                     Text("New build")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.white)
@@ -714,7 +718,7 @@ struct ProjectsDrawer: View {
         }
         .frame(maxHeight: .infinity, alignment: .top)
         .background(
-            Color(red: 0.055, green: 0.055, blue: 0.062)
+            Theme.hero
                 .clipShape(.rect(bottomTrailingRadius: 28, topTrailingRadius: 28))
                 .ignoresSafeArea()
                 .shadow(color: .black.opacity(0.6), radius: 24, x: 8)
