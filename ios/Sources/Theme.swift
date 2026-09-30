@@ -37,8 +37,10 @@ enum Theme {
     )
 }
 
-/// The Lovable home-screen glow: black up top melting into a blue bloom,
-/// then pink, then orange at the very bottom edge.
+/// The home-screen glow: a single focused cobalt ambient behind the hero
+/// content. (The old four-hue "sunset" bloom read as a muddy lilac bruise —
+/// independent review and owner feedback both called it out; kept to the
+/// navy/cobalt/lime family only.)
 struct LovableBloom: View {
     var body: some View {
         GeometryReader { geo in
@@ -50,33 +52,15 @@ struct LovableBloom: View {
                 Ellipse()
                     .fill(
                         RadialGradient(
-                            colors: [Theme.bloomBlue.opacity(0.34), .clear],
+                            colors: [Theme.bloomBlue.opacity(0.18), .clear],
                             center: .center,
-                            startRadius: 8,
-                            endRadius: w * 0.85
+                            startRadius: 10,
+                            endRadius: w * 0.75
                         )
                     )
-                    .frame(width: w * 1.8, height: h * 0.56)
-                    .position(x: w / 2, y: h * 0.76)
-                    .blur(radius: 56)
-
-                Ellipse()
-                    .fill(Theme.bloomIndigo.opacity(0.26))
-                    .frame(width: w * 1.3, height: h * 0.36)
-                    .position(x: w * 0.32, y: h * 0.84)
+                    .frame(width: w * 1.7, height: h * 0.60)
+                    .position(x: w / 2, y: h * 0.78)
                     .blur(radius: 70)
-
-                Ellipse()
-                    .fill(Theme.bloomPink.opacity(0.45))
-                    .frame(width: w * 2.0, height: h * 0.42)
-                    .position(x: w / 2, y: h * 0.96)
-                    .blur(radius: 60)
-
-                Ellipse()
-                    .fill(Theme.bloomOrange.opacity(0.22))
-                    .frame(width: w * 2.2, height: h * 0.34)
-                    .position(x: w / 2, y: h * 1.16)
-                    .blur(radius: 55)
             }
         }
         .ignoresSafeArea()
@@ -89,15 +73,27 @@ struct LovableBloom: View {
 struct CircleIconButton: View {
     let systemName: String
     var size: CGFloat = 44
+    /// true when the button sits on navy/hero chrome (dark treatment);
+    /// false (default) for the light blue-grey canvas.
+    var onDark = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.system(size: size * 0.40, weight: .medium))
-                .foregroundStyle(.white)
+                .foregroundStyle(onDark ? AnyShapeStyle(.white) : AnyShapeStyle(Theme.textPrimary))
                 .frame(width: size, height: size)
-                .background(Theme.surface, in: Circle())
+                .background(
+                    onDark ? AnyShapeStyle(Color.white.opacity(0.10)) : AnyShapeStyle(Theme.surface),
+                    in: Circle()
+                )
+                .overlay(
+                    Circle().strokeBorder(
+                        onDark ? Color.white.opacity(0.12) : Color.black.opacity(0.06),
+                        lineWidth: 1
+                    )
+                )
         }
     }
 }

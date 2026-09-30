@@ -35,23 +35,21 @@ struct HomeView: View {
                 LovableBloom()
                 VStack(spacing: 0) {
                     topBar
-                    Spacer()
+                    Spacer(minLength: 24)
                     connectPill
                     greeting
                     platformToggle
                     readinessBanner
                     composerCard
-                    Spacer()
-                    Spacer()
-                    Spacer()
+                    Spacer(minLength: 48)
                     HStack(spacing: 6) {
-                        Image(systemName: "triangle.fill")
-                            .font(.system(size: 9, weight: .bold))
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 11, weight: .medium))
                         Text("Runs on free AI models")
                             .font(.system(size: 13, weight: .medium))
                     }
             .foregroundStyle(Theme.heroMuted)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, 12)
                 }
                 .frame(maxWidth: homeContentMaxWidth)
                 #if os(macOS)
@@ -123,7 +121,7 @@ struct HomeView: View {
 
     private var topBar: some View {
         HStack {
-            CircleIconButton(systemName: "line.3.horizontal") {
+            CircleIconButton(systemName: "line.3.horizontal", onDark: true) {
                 Haptics.tap()
                 promptFocused = false
                 withAnimation(drawerSpring) { showDrawer = true }
@@ -152,41 +150,41 @@ struct HomeView: View {
             showToolsSheet = true
         } label: {
             HStack(spacing: 10) {
-                HStack(spacing: -7) {
-                    toolBadge(systemName: "triangle.fill", color: Color(red: 0.20, green: 0.66, blue: 0.33))
-                    toolBadge(systemName: "number", color: Color(red: 0.88, green: 0.10, blue: 0.41))
-                    toolBadge(systemName: "envelope.fill", color: Color(red: 0.92, green: 0.26, blue: 0.21))
+                HStack(spacing: -5) {
+                    toolBadge(systemName: "sparkles")
+                    toolBadge(systemName: "terminal")
+                    toolBadge(systemName: "globe")
                 }
                 Text("Connect all your tools")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
+                    .foregroundStyle(Theme.onHero)
                 Image(systemName: "arrow.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
+                    .foregroundStyle(Theme.heroMuted)
             }
             .padding(.horizontal, 14)
             .frame(height: 52)
-            .background(.black.opacity(0.55), in: Capsule())
-            .overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1))
+            .background(Theme.panel.opacity(0.94), in: Capsule())
+            .overlay(Capsule().strokeBorder(.white.opacity(0.12), lineWidth: 1))
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityIdentifier("connectToolsButton")
     }
 
-    private func toolBadge(systemName: String, color: Color) -> some View {
+    private func toolBadge(systemName: String) -> some View {
         Image(systemName: systemName)
-            .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(color)
-            .frame(width: 26, height: 26)
-            .background(Theme.surface, in: Circle())
-            .overlay(Circle().strokeBorder(.black.opacity(0.25), lineWidth: 0.5))
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(Theme.onHero)
+            .frame(width: 24, height: 24)
+            .background(Color.white.opacity(0.08), in: Circle())
+            .overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1))
     }
 
     private var greeting: some View {
         Text("Got an idea, \(AppConfig.userName)?")
             .font(.system(size: 30, weight: .semibold, design: .serif))
             .foregroundStyle(.white)
-            .padding(.top, 26)
+            .padding(.top, 20)
     }
 
     private var platformToggle: some View {
@@ -195,9 +193,9 @@ struct HomeView: View {
             platformButton("Mobile", icon: "iphone", value: "mobile")
         }
         .padding(4)
-        .background(Color(red: 0.118, green: 0.118, blue: 0.125).opacity(0.96), in: Capsule())
-        .overlay(Capsule().strokeBorder(Theme.stroke, lineWidth: 1))
-        .padding(.top, 26)
+        .background(Theme.panel.opacity(0.94), in: Capsule())
+        .overlay(Capsule().strokeBorder(.white.opacity(0.12), lineWidth: 1))
+        .padding(.top, 16)
     }
 
     private func platformButton(_ label: String, icon: String, value: String) -> some View {
@@ -213,13 +211,13 @@ struct HomeView: View {
                 Text(label)
                     .font(.system(size: 15, weight: .semibold))
             }
-            .foregroundStyle(platform == value ? .black : Theme.heroMuted)
+            .foregroundStyle(platform == value ? .white : Theme.heroMuted)
             .padding(.horizontal, 20)
             .frame(height: 38)
             .background {
                 if platform == value {
                     Capsule()
-                        .fill(.white)
+                        .fill(.white.opacity(0.16))
                         .matchedGeometryEffect(id: "platform-pill", in: toggleNamespace)
                 }
             }
@@ -234,11 +232,11 @@ struct HomeView: View {
                 "",
                 text: $prompt,
                 prompt: Text("Ask Petrable to build anything…")
-                    .foregroundStyle(Theme.textSecondary),
+                    .foregroundStyle(Theme.heroMuted),
                 axis: .vertical
             )
             .font(.system(size: 17))
-            .foregroundStyle(Theme.textPrimary)
+            .foregroundStyle(Theme.onHero)
             .tint(Theme.blue)
             .lineLimit(1...5)
             .focused($promptFocused)
@@ -279,7 +277,7 @@ struct HomeView: View {
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 21, weight: .medium))
-                        .foregroundStyle(Theme.textPrimary)
+                        .foregroundStyle(Theme.onHero)
                 }
                 .accessibilityIdentifier("homePlusMenu")
 
@@ -302,10 +300,11 @@ struct HomeView: View {
                     HStack(spacing: 6) {
                         Text(FreeModels.shortName(for: selectedModel))
                             .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(Theme.onHero)
                         Image(systemName: "chevron.down")
                             .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Theme.heroMuted)
                     }
-                    .foregroundStyle(Theme.textPrimary)
                 }
                 .accessibilityIdentifier("modelMenu")
 
@@ -333,15 +332,15 @@ struct HomeView: View {
             }
         }
         .padding(.horizontal, 18)
-        .padding(.top, 20)
+        .padding(.top, 16)
         .padding(.bottom, 14)
-        .background(Color(red: 0.118, green: 0.118, blue: 0.125).opacity(0.96), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .background(Theme.panel.opacity(0.94), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.07), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(.white.opacity(0.12), lineWidth: 1)
         )
         .padding(.horizontal, 16)
-        .padding(.top, 14)
+        .padding(.top, 16)
     }
 
     private func pasteIntoPrompt() {
@@ -385,9 +384,9 @@ struct HomeView: View {
                 Spacer(minLength: 0)
             }
             .padding(14)
-            .background(Theme.surface.opacity(0.92), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(Theme.surface.opacity(0.92), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(Theme.amber.opacity(0.28), lineWidth: 1)
             )
             .padding(.horizontal, 16)
