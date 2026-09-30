@@ -899,6 +899,35 @@ export const destroySandbox = internalAction({
   },
 });
 
+/// Weekly disk sweep (2026-09-30): stopped sandboxes keep their disk, which
+/// is how the free 30 GiB tier got exhausted. Destroy sandboxes that are
+/// older than the idle window AND whose project hasn't been touched in that
+/// window (or that no project references any more). Active builds and anything
+/// newer than the window are never touched; `projects:remove` still destroys
+/// its own sandbox immediately.
+export const sweepSandboxes = internalAction({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const projects = await ctx.runQuery(internal.projects.allInternal, {});
+    const bySandbox = new Map(
+      projects.filter((p) => p.sandboxId).map((p) => [p.sandboxId as string, p])
+    );
+    const listing = await daytonaJson<{ items: { id: string; createdAt?: string }[] }>(
+      "/sandbox"
+    );
+    const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
+    for (const sb of listing.items ?? []) {
+      const created = Date.parse(sb.createdAt ?? "");
+      if (!Number.isFinite(created) || created >= cutoff) continue; // grace period
+      const project = bySandbox.get(sb.id);
+      if (project && project.updatedAt >= cutoff) continue; // still in active use
+      await daytona(`/sandbox/${sb.id}`, { method: "DELETE" }, 60_000).catch(() => {});
+    }
+    return null;
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Mobile actions (Chorus)
 // ---------------------------------------------------------------------------

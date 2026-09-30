@@ -173,6 +173,14 @@ export const getInternal = internalQuery({
   },
 });
 
+export const allInternal = internalQuery({
+  args: {},
+  returns: v.array(projectShape),
+  handler: async (ctx) => {
+    return await ctx.db.query("projects").collect();
+  },
+});
+
 export const update = internalMutation({
   args: {
     id: v.id("projects"),
