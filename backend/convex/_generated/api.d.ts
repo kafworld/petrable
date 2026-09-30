@@ -9,6 +9,7 @@
  */
 
 import type * as builder from "../builder.js";
+import type * as crons from "../crons.js";
 import type * as files from "../files.js";
 import type * as freeAi from "../freeAi.js";
 import type * as http from "../http.js";
@@ -28,6 +29,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   builder: typeof builder;
+  crons: typeof crons;
   files: typeof files;
   freeAi: typeof freeAi;
   http: typeof http;
