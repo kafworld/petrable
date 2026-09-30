@@ -54,6 +54,19 @@ export const create = mutation({
   },
   returns: v.id("projects"),
   handler: async (ctx, { prompt, platform, model }) => {
+    // Public-deployment guard (approved): soft rate limit —10 builds active
+    // in the last hour. Strangers can't drain Daytona/Convex free quota;
+    // normal single-user flow never notices.
+    const recentCutoff = Date.now() - 60 * 60 * 1000;
+    const recent = await ctx.db
+      .query("projects")
+      .filter((q) => q.gte(q.field("updatedAt"), recentCutoff))
+      .take(10);
+    if (recent.length >= 10) {
+      throw new Error(
+        "Rate limit reached:10 builds already ran in the last hour on this deployment. Please wait a little and try again."
+      );
+    }
     const target = platform === "mobile" ? "mobile" : "web";
     const id = await ctx.db.insert("projects", {
       name: "New App",
