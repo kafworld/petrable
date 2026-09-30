@@ -173,11 +173,11 @@ struct HomeView: View {
 
     private func toolBadge(systemName: String) -> some View {
         Image(systemName: systemName)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(Theme.onHero)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(.white)
             .frame(width: 24, height: 24)
-            .background(Color.white.opacity(0.08), in: Circle())
-            .overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1))
+            .background(Color.white.opacity(0.14), in: Circle())
+            .overlay(Circle().strokeBorder(.white.opacity(0.24), lineWidth: 1))
     }
 
     private var greeting: some View {
@@ -211,7 +211,7 @@ struct HomeView: View {
                 Text(label)
                     .font(.system(size: 15, weight: .semibold))
             }
-            .foregroundStyle(platform == value ? .white : Theme.heroMuted)
+            .foregroundStyle(platform == value ? .white : Theme.onHero.opacity(0.70))
             .padding(.horizontal, 20)
             .frame(height: 38)
             .background {
@@ -276,7 +276,7 @@ struct HomeView: View {
                     }
                 } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 21, weight: .medium))
+                        .font(.system(size: 21, weight: .semibold))
                         .foregroundStyle(Theme.onHero)
                 }
                 .accessibilityIdentifier("homePlusMenu")
@@ -728,26 +728,26 @@ struct ProjectsDrawer: View {
                 HStack(spacing: 6) {
                     Text(project.name)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
+                        .foregroundStyle(Theme.onHero)
                         .lineLimit(1)
                     if project.isMobile {
                         Image(systemName: "iphone")
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(Theme.textSecondary)
+                            .foregroundStyle(Theme.lime)
                     }
                 }
                 HStack(spacing: 6) {
                     Circle().fill(statusColor(project)).frame(width: 6, height: 6)
                     Text(project.isBusy ? (project.statusDetail ?? "Working…") : project.statusLabel)
                         .font(.system(size: 13))
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.heroMuted)
                         .lineLimit(1)
                 }
             }
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Theme.textSecondary.opacity(0.5))
+                .foregroundStyle(Theme.heroMuted.opacity(0.7))
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 9)

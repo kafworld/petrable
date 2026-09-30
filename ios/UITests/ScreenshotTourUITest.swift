@@ -49,6 +49,16 @@ final class ScreenshotTourUITest: XCTestCase {
             }
         }
 
+        // The menu (drawer) — opened and shot regardless of how we reach chat.
+        if app.buttons["menuButton"].waitForExistence(timeout: 6) {
+            app.buttons["menuButton"].tap()
+            sleep(2)
+            shot(app, "07-drawer")
+            // Tap the scrim (right of the drawer) to close it again.
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+            sleep(1)
+        }
+
         // Prefer the deterministic deep link to the success-story project
         // (drawer taps land on the wrong row on this beta sim). Handles the
         // iOS "Open in …?" confirmation if the system raises one.

@@ -81,19 +81,20 @@ struct CircleIconButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: size * 0.40, weight: .medium))
-                .foregroundStyle(onDark ? AnyShapeStyle(.white) : AnyShapeStyle(Theme.textPrimary))
+                .font(.system(size: size * 0.42, weight: .semibold))
+                .foregroundStyle(onDark ? Theme.lime : Theme.blue)
                 .frame(width: size, height: size)
                 .background(
-                    onDark ? AnyShapeStyle(Color.white.opacity(0.10)) : AnyShapeStyle(Theme.surface),
+                    onDark ? AnyShapeStyle(Color.white.opacity(0.12)) : AnyShapeStyle(Color.white),
                     in: Circle()
                 )
                 .overlay(
                     Circle().strokeBorder(
-                        onDark ? Color.white.opacity(0.12) : Color.black.opacity(0.06),
+                        onDark ? Color.white.opacity(0.22) : Theme.stroke,
                         lineWidth: 1
                     )
                 )
+                .shadow(color: onDark ? .clear : Color.black.opacity(0.10), radius: 6, y: 2)
         }
     }
 }

@@ -197,7 +197,7 @@ struct VoiceButton: View {
                 switch voice.state {
                 case .idle:
                     Image(systemName: "mic")
-                        .font(.system(size: styleCircle ? 17 : 19, weight: .medium))
+                        .font(.system(size: styleCircle ? 17 : 19, weight: .semibold))
                         .foregroundStyle(styleCircle ? .white.opacity(0.92) : .white)
                 case .recording:
                     Image(systemName: "stop.fill")
