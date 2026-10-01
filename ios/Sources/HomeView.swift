@@ -468,7 +468,7 @@ private struct ToolConnectionsSheet: View {
                 name: "Free AI Proxy",
                 detail: "Generated apps call the keyless proxy for free AI without exposing any key.",
                 status: status.aiGatewayReady ? "Ready" : "Optional",
-                icon: "triangle.fill",
+                icon: "sparkles",
                 color: status.aiGatewayReady ? Theme.green : Color(red: 0.22, green: 0.62, blue: 1.00)
             ),
         ]

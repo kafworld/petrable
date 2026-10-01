@@ -18,7 +18,7 @@ struct WelcomeView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 92 * scale, height: 92 * scale)
-                        .shadow(color: Theme.bloomPink.opacity(0.44), radius: 24, y: 8)
+                        .shadow(color: Theme.bloomBlue.opacity(0.44), radius: 24, y: 8)
                         .scaleEffect(appeared ? 1 : 0.72)
                         .opacity(appeared ? 1 : 0)
 
