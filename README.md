@@ -1,6 +1,6 @@
 # Petrable
 
-**An open-source iPhone app that builds apps.** Type a prompt → a free AI model writes the code →
+**An open-source iOS and macOS app that builds apps.** Type a prompt → a free AI model writes the code →
 it goes live in the cloud → you preview it right inside the app. Web apps run in
 [Daytona](https://daytona.io) sandboxes; native iOS apps are compiled by
 [Chorus](https://ios.chorus.com) cloud Xcode and previewed in a browser iPhone simulator — or
@@ -14,7 +14,7 @@ own stack, your own keys.
 | | | |
 |---|---|---|
 | ![Welcome](docs/welcome.png) | ![Home](docs/home.png) | ![Model picker](docs/models.png) |
-| ![Tool connections](docs/tools.png) | ![Live build chat](docs/chat.png) | |
+| ![Tool connections](docs/tools.png) | ![Live build chat](docs/chat.png) | ![Menu](docs/drawer.png) |
 
 ## The fastest way to set it up
 
