@@ -13,8 +13,12 @@ own stack, your own keys.
 
 | | | |
 |---|---|---|
-| ![Welcome](docs/welcome.png) | ![Home](docs/home.png) | ![Model picker](docs/models.png) |
-| ![Tool connections](docs/tools.png) | ![Live build chat](docs/chat.png) | ![Menu](docs/drawer.png) |
+| ![Build something Petrable](docs/store-01-build-petrable.png) | ![Choose your AI](docs/store-02-choose-your-ai.png) | ![Dream it, build it, ship it](docs/store-03-dream-build-ship.png) |
+| ![Prompt in voice mode](docs/store-04-voice-mode.png) | ![Test your connections](docs/store-05-connections.png) | ![Publish in one tap](docs/store-06-publish.png) |
+
+| | |
+|---|---|
+| ![Petrable for Mac — build something Petrable](docs/store-mac-01-build-petrable.png) | ![Petrable for Mac — dream it, build it, ship it](docs/store-mac-02-dream-build-ship.png) |
 
 ## The fastest way to set it up
 
@@ -46,6 +50,14 @@ for the live status board, key setup and troubleshooting.
 - **Voice input** — mic in every composer, transcribed by free Groq Whisper (key stays server-side)
 - **AI skill for generated apps** — a keyless proxy to the free model chain means every app
   the agent builds can have AI features without leaking any key into client code
+
+## What's next
+
+Planned upgrades:
+
+- 🎙️ **Voice-to-app** — hold, talk, and Petrable builds while you walk away from the phone
+- 🔔 **Build notifications** — close the app and get a push the moment your build is live
+- 🚀 **One-tap publishing** — share live preview links, custom domains, and App Store submission straight from your phone
 
 ## Keys you'll need
 
