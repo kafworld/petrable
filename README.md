@@ -13,12 +13,12 @@ own stack, your own keys.
 
 | | | |
 |---|---|---|
-| ![Build something Petrable](docs/store-01-build-petrable.png?v=12c5be96de26) | ![Choose your AI](docs/store-02-choose-your-ai.png?v=f46a7cbcbfdf) | ![Dream it, build it, ship it](docs/store-03-dream-build-ship.png?v=755b9bf0bf1b) |
-| ![Prompt in voice mode](docs/store-04-voice-mode.png?v=2d067ae5260e) | ![Test your connections](docs/store-05-connections.png?v=b1f6f6990eb3) | ![Publish in one tap](docs/store-06-publish.png?v=2ecce4948ee0) |
+| ![Build something Petrable](https://raw.githubusercontent.com/kafworlddigital/petrable/8dd3202b76c09023d648efd27013cc297da1dc46/docs/store-01-build-petrable.png) | ![Choose your AI](https://raw.githubusercontent.com/kafworlddigital/petrable/8dd3202b76c09023d648efd27013cc297da1dc46/docs/store-02-choose-your-ai.png) | ![Dream it, build it, ship it](https://raw.githubusercontent.com/kafworlddigital/petrable/8dd3202b76c09023d648efd27013cc297da1dc46/docs/store-03-dream-build-ship.png) |
+| ![Prompt in voice mode](https://raw.githubusercontent.com/kafworlddigital/petrable/8dd3202b76c09023d648efd27013cc297da1dc46/docs/store-04-voice-mode.png) | ![Test your connections](https://raw.githubusercontent.com/kafworlddigital/petrable/8dd3202b76c09023d648efd27013cc297da1dc46/docs/store-05-connections.png) | ![Publish in one tap](https://raw.githubusercontent.com/kafworlddigital/petrable/8dd3202b76c09023d648efd27013cc297da1dc46/docs/store-06-publish.png) |
 
 | | |
 |---|---|
-| ![Petrable for Mac — build something Petrable](docs/store-mac-01-build-petrable.png?v=ef6be0f12f41) | ![Petrable for Mac — dream it, build it, ship it](docs/store-mac-02-dream-build-ship.png?v=be788ae10ab3) |
+| ![Petrable for Mac — build something Petrable](https://raw.githubusercontent.com/kafworlddigital/petrable/8dd3202b76c09023d648efd27013cc297da1dc46/docs/store-mac-01-build-petrable.png) | ![Petrable for Mac — dream it, build it, ship it](https://raw.githubusercontent.com/kafworlddigital/petrable/8dd3202b76c09023d648efd27013cc297da1dc46/docs/store-mac-02-dream-build-ship.png) |
 
 ## The fastest way to set it up
 
