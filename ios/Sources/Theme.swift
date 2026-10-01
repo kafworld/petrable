@@ -96,6 +96,9 @@ struct CircleIconButton: View {
                 )
                 .shadow(color: onDark ? .clear : Color.black.opacity(0.10), radius: 6, y: 2)
         }
+        // macOS renders its own rounded-square chrome behind bordered buttons;
+        // plain keeps just our circle (transparent square) on both platforms.
+        .buttonStyle(.plain)
     }
 }
 

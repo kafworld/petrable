@@ -34,6 +34,7 @@ struct DetailsSheet: View {
                 }
             }
             .navigationTitle(vm.project.map { "\($0.name) · Files" } ?? "Files")
+            .navyToolbarBackground()
             .darkNavigationChromeWhenAvailable()
         }
         .desktopSheetFrame()

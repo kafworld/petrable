@@ -403,17 +403,35 @@ struct ChatView: View {
 
     private var busy: Bool { vm.project?.isBusy ?? true }
 
+    // macOS shows a native dark field under the card, so the prompt and typed
+    // text must be light; iOS renders the card itself (white) so both go dark.
+    private var fieldPromptColor: Color {
+        #if os(macOS)
+        Theme.heroMuted
+        #else
+        Color(red: 62/255, green: 84/255, blue: 130/255)
+        #endif
+    }
+
+    private var fieldTextColor: Color {
+        #if os(macOS)
+        Theme.onHero
+        #else
+        Theme.textPrimary
+        #endif
+    }
+
     private var composer: some View {
         VStack(alignment: .leading, spacing: 16) {
             TextField(
                 "",
                 text: $draft,
                 prompt: Text(busy ? "Queue follow-up…" : "Ask Petrable…")
-                    .foregroundStyle(Theme.textSecondary),
+                    .foregroundStyle(fieldPromptColor),
                 axis: .vertical
             )
             .font(.system(size: 17))
-            .foregroundStyle(Theme.textPrimary)
+            .foregroundStyle(fieldTextColor)
             .tint(Theme.blue)
             .lineLimit(1...4)
             .focused($focused)
@@ -447,6 +465,7 @@ struct ChatView: View {
                             }
                         }
                     }
+                    .buttonStyle(PressableButtonStyle())
                     .disabled(sending)
                     .accessibilityIdentifier("chatSendButton")
                 }

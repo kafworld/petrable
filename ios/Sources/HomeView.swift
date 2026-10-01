@@ -5,7 +5,7 @@ struct HomeView: View {
     @StateObject private var voice = VoiceRecorder()
     @State private var prompt = ""
     @State private var platform = "web"
-    @AppStorage("selectedModel") private var selectedModel = "free-balanced"
+    @AppStorage("selectedModel") private var selectedModel = "free-smart"
     @State private var creating = false
     @State private var path: [String] = []
     @State private var showDrawer = false
@@ -223,6 +223,7 @@ struct HomeView: View {
             }
             .contentShape(Capsule())
         }
+        .buttonStyle(PressableButtonStyle())
         .accessibilityIdentifier("platform-\(value)")
     }
 
@@ -497,15 +498,16 @@ private struct ToolConnectionsSheet: View {
             }
             .background(Theme.hero.ignoresSafeArea())
             .navigationTitle("Tool connections")
+            .navyToolbarBackground()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
-                        .foregroundStyle(Theme.textPrimary)
+                        .foregroundStyle(Theme.onHero)
                 }
             }
         }
-        .darkNavigationChromeWhenAvailable()
-        .desktopSheetFrame(width: 640, height: 720)
+            .darkNavigationChromeWhenAvailable()
+            .desktopSheetFrame(width: 640, height: 720)
     }
 
     private var statusPanel: some View {

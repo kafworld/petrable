@@ -222,6 +222,7 @@ struct VoiceButton: View {
                 in: Circle()
             )
         }
+        .buttonStyle(PressableButtonStyle())
         .accessibilityIdentifier("voiceButton")
     }
 }

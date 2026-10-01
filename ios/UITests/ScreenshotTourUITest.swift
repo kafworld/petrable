@@ -15,6 +15,28 @@ final class ScreenshotTourUITest: XCTestCase {
         add(a)
     }
 
+    /// Screenshots must show Gemini Pro (Keith directive, 1 Oct 2026).
+    private func selectGeminiPro(_ app: XCUIApplication) {
+        let chip = app.buttons["chatModelMenu"]
+        guard chip.exists else { return }
+        for _ in 0..<2 {
+            if chip.label.contains("Gemini Pro") { return }
+            chip.tap()
+            let item = app.menuItems["Gemini Pro"]
+            if item.waitForExistence(timeout: 4) {
+                item.tap()
+            } else {
+                // Menu opened without the expected item — dismiss it.
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
+            }
+            // The chip only updates after the Convex subscription round-trip.
+            for _ in 0..<8 {
+                if chip.label.contains("Gemini Pro") { return }
+                sleep(1)
+            }
+        }
+    }
+
     func testScreenshotTour() throws {
         let app = XCUIApplication()
         app.launchArguments += ["-hasEntered", "YES"]
@@ -71,6 +93,7 @@ final class ScreenshotTourUITest: XCTestCase {
             }
             if app.textFields["chatField"].waitForExistence(timeout: 15) {
                 sleep(2)
+                selectGeminiPro(app)
                 shot(app, "05-chat")
                 gotChat = true
             }
@@ -85,6 +108,7 @@ final class ScreenshotTourUITest: XCTestCase {
                 firstRow.tap()
                 if app.textFields["chatField"].waitForExistence(timeout: 15) {
                     sleep(2)
+                    selectGeminiPro(app)
                     shot(app, "05-chat")
                 }
                 if app.buttons["chatBackButton"].exists {
