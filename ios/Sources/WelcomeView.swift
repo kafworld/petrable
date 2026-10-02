@@ -68,6 +68,12 @@ struct WelcomeView: View {
                 withAnimation(.spring(response: 0.7, dampingFraction: 0.7)) {
                     appeared = true
                 }
+                if ProcessInfo.processInfo.arguments.contains("-demo") {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+                        Haptics.tap()
+                        hasEntered = true
+                    }
+                }
             }
         }
     }

@@ -32,7 +32,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ZStack {
-                LovableBloom()
+                LovableBloom().onAppear { demoRun() }
                 VStack(spacing: 0) {
                     topBar
                     Spacer(minLength: 24)
@@ -397,6 +397,20 @@ struct HomeView: View {
             .padding(.horizontal, 16)
             .padding(.top, 12)
             .transition(.opacity.combined(with: .move(edge: .top)))
+        }
+    }
+
+    private func demoRun() {
+        guard ProcessInfo.processInfo.arguments.contains("-demo") else { return }
+        let phrase = "Build a landing page announcing the release of my short story"
+        let words = phrase.split(separator: " ")
+        for (i, w) in words.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.4 + Double(i) * 0.26) {
+                prompt = prompt.isEmpty ? String(w) : prompt + " " + w
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4 + Double(words.count) * 0.26 + 1.1) {
+            submit()
         }
     }
 
