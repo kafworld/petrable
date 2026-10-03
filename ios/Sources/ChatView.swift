@@ -46,11 +46,21 @@ struct ChatView: View {
             case .code: showDetails = true
             default: break
             }
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("-demo") || args.contains("-preview-demo") {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                    if vm.project?.status == "live" { showPreview = true }
+                }
+            }
         }
         .onChange(of: vm.project?.status) { oldStatus, newStatus in
             guard let old = oldStatus, let new = newStatus else { return }
             if new == "live" && Project.busyStatuses.contains(old) {
                 Haptics.success()
+                let a2 = ProcessInfo.processInfo.arguments
+                if a2.contains("-demo") || a2.contains("-preview-demo") {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { showPreview = true }
+                }
             } else if new == "error" {
                 Haptics.error()
             }
